@@ -13,8 +13,8 @@ use pyo3::{
 
 use crate::{
     container::{
-        Container, Cursor, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree, Side,
-        UpdateOptions,
+        Container, Cursor, LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree,
+        LoroUnknown, Side, UpdateOptions,
     },
     event::{
         ContainerDiff, Diff, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
@@ -112,6 +112,28 @@ pub fn pyobject_to_container_id(
     }
 
     Err(PyTypeError::new_err("Invalid ContainerID"))
+}
+
+pub fn pyobject_to_container(py: Python<'_>, obj: PyObject) -> PyResult<Container> {
+    if let Ok(value) = obj.downcast_bound::<LoroText>(py) {
+        return Ok(Container::Text(value.get().clone()));
+    }
+    if let Ok(value) = obj.downcast_bound::<LoroMap>(py) {
+        return Ok(Container::Map(value.get().clone()));
+    }
+    if let Ok(value) = obj.downcast_bound::<LoroList>(py) {
+        return Ok(Container::List(value.get().clone()));
+    }
+    if let Ok(value) = obj.downcast_bound::<LoroMovableList>(py) {
+        return Ok(Container::MovableList(value.get().clone()));
+    }
+    if let Ok(value) = obj.downcast_bound::<LoroTree>(py) {
+        return Ok(Container::Tree(value.get().clone()));
+    }
+    if let Ok(value) = obj.downcast_bound::<LoroCounter>(py) {
+        return Ok(Container::Counter(value.get().clone()));
+    }
+    Err(PyTypeError::new_err("Invalid Container"))
 }
 
 pub fn pyobject_to_loro_value(py: Python<'_>, obj: PyObject) -> PyResult<loro::LoroValue> {
@@ -489,8 +511,21 @@ impl From<loro::Container> for Container {
             loro::Container::MovableList(c) => Container::MovableList(LoroMovableList(c)),
             loro::Container::Text(c) => Container::Text(LoroText(c)),
             loro::Container::Tree(c) => Container::Tree(LoroTree(c)),
-            loro::Container::Counter(c) => todo!(),
-            loro::Container::Unknown(c) => todo!(),
+            loro::Container::Counter(c) => Container::Counter(LoroCounter(c)),
+            loro::Container::Unknown(c) => Container::Unknown(LoroUnknown(c)),
+        }
+    }
+}
+impl From<Container> for loro::Container {
+    fn from(value: Container) -> Self {
+        match value {
+            Container::List(c) => loro::Container::List(c.0),
+            Container::Map(c) => loro::Container::Map(c.0),
+            Container::MovableList(c) => loro::Container::MovableList(c.0),
+            Container::Text(c) => loro::Container::Text(c.0),
+            Container::Tree(c) => loro::Container::Tree(c.0),
+            Container::Counter(c) => loro::Container::Counter(c.0),
+            Container::Unknown(c) => loro::Container::Unknown(c.0),
         }
     }
 }
