@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use fxhash::FxHashMap;
 use pyo3::{
@@ -9,10 +12,13 @@ use pyo3::{
 };
 
 use crate::{
-    container::{Container, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree},
+    container::{
+        Container, Cursor, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree, Side,
+        UpdateOptions,
+    },
     event::{
-        ContainerDiff, Diff, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem, TextDelta,
-        TreeDiff, TreeDiffItem, TreeExternalDiff,
+        ContainerDiff, Diff, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
+        Subscription, TextDelta, TreeDiff, TreeDiffItem, TreeExternalDiff,
     },
     value::{
         ContainerID, ContainerType, LoroBinaryValue, LoroListValue, LoroMapValue, LoroStringValue,
@@ -108,7 +114,7 @@ pub fn pyobject_to_container_id(
     Err(PyTypeError::new_err("Invalid ContainerID"))
 }
 
-pub fn pyobject_to_loro_value(py: Python<'_>, obj: &PyObject) -> PyResult<loro::LoroValue> {
+pub fn pyobject_to_loro_value(py: Python<'_>, obj: PyObject) -> PyResult<loro::LoroValue> {
     if obj.is_none(py) {
         return Ok(loro::LoroValue::Null);
     }
@@ -128,7 +134,7 @@ pub fn pyobject_to_loro_value(py: Python<'_>, obj: &PyObject) -> PyResult<loro::
     if let Ok(value) = obj.downcast_bound::<PyList>(py) {
         let mut list = Vec::with_capacity(value.len());
         for item in value.iter() {
-            list.push(pyobject_to_loro_value(py, &item.unbind())?);
+            list.push(pyobject_to_loro_value(py, item.unbind())?);
         }
         return Ok(loro::LoroValue::List(loro::LoroListValue::from(list)));
     }
@@ -136,10 +142,7 @@ pub fn pyobject_to_loro_value(py: Python<'_>, obj: &PyObject) -> PyResult<loro::
         let mut map = FxHashMap::default();
         for (key, value) in value.iter() {
             if key.downcast::<PyString>().is_ok() {
-                map.insert(
-                    key.to_string(),
-                    pyobject_to_loro_value(py, &value.unbind())?,
-                );
+                map.insert(key.to_string(), pyobject_to_loro_value(py, value.unbind())?);
             } else {
                 return Err(PyTypeError::new_err(
                     "only dict with string keys is supported for converting to LoroValue",
@@ -154,7 +157,7 @@ pub fn pyobject_to_loro_value(py: Python<'_>, obj: &PyObject) -> PyResult<loro::
             if key.downcast::<PyString>().is_ok() {
                 map.insert(
                     key.to_string(),
-                    pyobject_to_loro_value(py, &value.get_item(key).unwrap().unbind())?,
+                    pyobject_to_loro_value(py, value.get_item(key).unwrap().unbind())?,
                 );
             } else {
                 return Err(PyTypeError::new_err(
@@ -404,37 +407,7 @@ impl From<&loro::event::Diff<'_>> for Diff {
                 Diff::List(ans)
             }
             loro::event::Diff::Text(t) => {
-                let mut ans = Vec::new();
-                for item in t.iter() {
-                    match item {
-                        loro::TextDelta::Retain { retain, attributes } => {
-                            ans.push(TextDelta::Retain {
-                                retain: *retain as u32,
-                                attributes: attributes.as_ref().map(|a| {
-                                    a.iter()
-                                        .map(|(k, v)| (k.to_string(), v.clone().into()))
-                                        .collect()
-                                }),
-                            });
-                        }
-                        loro::TextDelta::Insert { insert, attributes } => {
-                            ans.push(TextDelta::Insert {
-                                insert: insert.to_string(),
-                                attributes: attributes.as_ref().map(|a| {
-                                    a.iter()
-                                        .map(|(k, v)| (k.to_string(), v.clone().into()))
-                                        .collect()
-                                }),
-                            });
-                        }
-                        loro::TextDelta::Delete { delete } => {
-                            ans.push(TextDelta::Delete {
-                                delete: *delete as u32,
-                            });
-                        }
-                    }
-                }
-                Diff::Text(ans)
+                Diff::Text(t.iter().map(|x| x.into()).collect::<Vec<_>>())
             }
             loro::event::Diff::Map(m) => {
                 let mut updated = HashMap::new();
@@ -519,5 +492,106 @@ impl From<loro::Container> for Container {
             loro::Container::Counter(c) => todo!(),
             loro::Container::Unknown(c) => todo!(),
         }
+    }
+}
+
+impl From<&Index> for loro::Index {
+    fn from(value: &Index) -> Self {
+        match value {
+            Index::Key { key } => loro::Index::Key(key.clone().into()),
+            Index::Seq { index } => loro::Index::Seq(*index as usize),
+            Index::Node { target } => loro::Index::Node((*target).into()),
+        }
+    }
+}
+
+impl From<UpdateOptions> for loro::UpdateOptions {
+    fn from(value: UpdateOptions) -> Self {
+        Self {
+            timeout_ms: value.timeout_ms,
+            use_refined_diff: value.use_refined_diff,
+        }
+    }
+}
+
+impl From<&TextDelta> for loro::TextDelta {
+    fn from(value: &TextDelta) -> Self {
+        match value {
+            TextDelta::Retain { retain, attributes } => loro::TextDelta::Retain {
+                retain: *retain,
+                attributes: attributes
+                    .as_ref()
+                    .map(|a| a.iter().map(|(k, v)| (k.to_string(), v.into())).collect()),
+            },
+            TextDelta::Insert { insert, attributes } => loro::TextDelta::Insert {
+                insert: insert.to_string(),
+                attributes: attributes
+                    .as_ref()
+                    .map(|a| a.iter().map(|(k, v)| (k.to_string(), v.into())).collect()),
+            },
+            TextDelta::Delete { delete } => loro::TextDelta::Delete { delete: *delete },
+        }
+    }
+}
+
+impl From<&loro::TextDelta> for TextDelta {
+    fn from(value: &loro::TextDelta) -> Self {
+        match value {
+            loro::TextDelta::Retain { retain, attributes } => TextDelta::Retain {
+                retain: *retain,
+                attributes: attributes.as_ref().map(|a| {
+                    a.iter()
+                        .map(|(k, v)| (k.to_string(), v.clone().into()))
+                        .collect()
+                }),
+            },
+            loro::TextDelta::Insert { insert, attributes } => TextDelta::Insert {
+                insert: insert.to_string(),
+                attributes: attributes.as_ref().map(|a| {
+                    a.iter()
+                        .map(|(k, v)| (k.to_string(), v.clone().into()))
+                        .collect()
+                }),
+            },
+            loro::TextDelta::Delete { delete } => TextDelta::Delete { delete: *delete },
+        }
+    }
+}
+
+impl From<Side> for loro::cursor::Side {
+    fn from(value: Side) -> Self {
+        match value {
+            Side::Left => loro::cursor::Side::Left,
+            Side::Middle => loro::cursor::Side::Middle,
+            Side::Right => loro::cursor::Side::Right,
+        }
+    }
+}
+
+impl From<loro::cursor::Side> for Side {
+    fn from(value: loro::cursor::Side) -> Self {
+        match value {
+            loro::cursor::Side::Left => Side::Left,
+            loro::cursor::Side::Middle => Side::Middle,
+            loro::cursor::Side::Right => Side::Right,
+        }
+    }
+}
+
+impl From<Cursor> for loro::cursor::Cursor {
+    fn from(value: Cursor) -> Self {
+        value.0
+    }
+}
+
+impl From<loro::cursor::Cursor> for Cursor {
+    fn from(value: loro::cursor::Cursor) -> Self {
+        Cursor(value)
+    }
+}
+
+impl From<loro::Subscription> for Subscription {
+    fn from(value: loro::Subscription) -> Self {
+        Subscription(Mutex::new(Some(value)))
     }
 }

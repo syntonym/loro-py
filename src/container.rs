@@ -11,7 +11,7 @@ pub use counter::LoroCounter;
 pub use list::LoroList;
 pub use map::LoroMap;
 pub use movable_list::LoroMovableList;
-pub use text::LoroText;
+pub use text::*;
 pub use tree::LoroTree;
 
 #[pyclass(frozen)]
@@ -27,9 +27,9 @@ pub enum Container {
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Container>()?;
+    text::register_class(m)?;
     m.add_class::<LoroList>()?;
     m.add_class::<LoroMap>()?;
-    m.add_class::<LoroText>()?;
     m.add_class::<LoroTree>()?;
     m.add_class::<LoroMovableList>()?;
     m.add_class::<LoroCounter>()?;

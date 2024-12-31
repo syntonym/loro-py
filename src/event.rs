@@ -1,7 +1,9 @@
 use crate::value::{ContainerID, LoroValue, TreeID, TreeParentId, ValueOrContainer};
 use pyo3::prelude::*;
+use pyo3::types::{PyDict, PyTuple};
 use std::collections::HashMap;
 use std::fmt;
+use std::sync::Mutex;
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DiffEvent>()?;
@@ -199,7 +201,7 @@ impl fmt::Display for Diff {
 #[derive(Debug, Clone)]
 pub enum TextDelta {
     Retain {
-        retain: u32,
+        retain: usize,
         attributes: Option<HashMap<String, LoroValue>>,
     },
     Insert {
@@ -207,7 +209,7 @@ pub enum TextDelta {
         attributes: Option<HashMap<String, LoroValue>>,
     },
     Delete {
-        delete: u32,
+        delete: usize,
     },
 }
 
@@ -422,18 +424,22 @@ impl fmt::Display for TreeExternalDiff {
     }
 }
 
-#[pyclass]
-pub struct Subscription(Option<loro::Subscription>);
+#[pyclass(frozen)]
+pub struct Subscription(pub(crate) Mutex<Option<loro::Subscription>>);
 
+#[pymethods]
 impl Subscription {
-    pub fn new(subscription: loro::Subscription) -> Self {
-        Self(Some(subscription))
-    }
-
-    pub fn __call__(mut slf: PyRefMut<Self>) -> PyResult<()> {
-        // 使用 take() 获取所有权
-        if let Some(subscription) = std::mem::take(&mut slf.0) {
-            subscription.unsubscribe();
+    #[pyo3(signature = (*_args, **_kwargs))]
+    pub fn __call__(
+        &self,
+        _py: Python<'_>,
+        _args: &Bound<'_, PyTuple>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        if let Ok(mut subscription) = self.0.lock() {
+            if let Some(subscription) = std::mem::take(&mut *subscription) {
+                subscription.unsubscribe();
+            }
         }
         Ok(())
     }

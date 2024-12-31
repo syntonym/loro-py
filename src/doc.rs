@@ -1,13 +1,13 @@
 use loro::{LoroDoc as LoroDocInner, PeerID, Timestamp};
-use pyo3::{prelude::*, types::PyBytes};
-use std::{fmt::Display, sync::Arc};
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
+use std::{collections::HashSet, fmt::Display, sync::Arc};
 
 use crate::{
     container::{LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree},
     convert::pyobject_to_container_id,
     err::PyLoroResult,
-    event::{DiffEvent, Subscription},
-    value::{ContainerID, ContainerType, LoroValue, Ordering},
+    event::{DiffEvent, Index, Subscription},
+    value::{ContainerID, ContainerType, LoroValue, Ordering, ValueOrContainer, ID},
     version::{Frontiers, VersionRange, VersionVector},
 };
 
@@ -155,7 +155,6 @@ impl LoroDoc {
     ///
     /// Expand is used to specify the behavior of expanding when new text is inserted at the
     /// beginning or end of the style.
-    // TODO:
     // #[inline]
     // pub fn config_text_style(&self, text_style: StyleConfigMap) {
     //     self.doc.config_text_style(text_style)
@@ -572,27 +571,29 @@ impl LoroDoc {
                 });
             }),
         );
-        Subscription::new(subscription)
+        subscription.into()
     }
 
-    // /// Subscribe all the events.
-    // ///
-    // /// The callback will be invoked when any part of the [loro_internal::DocState] is changed.
-    // /// Returns a subscription that can be used to unsubscribe.
-    // ///
-    // /// The events will be emitted after a transaction is committed. A transaction is committed when:
-    // ///
-    // /// - `doc.commit()` is called.
-    // /// - `doc.export(mode)` is called.
-    // /// - `doc.import(data)` is called.
-    // /// - `doc.checkout(version)` is called.
-    // #[inline]
-    // pub fn subscribe_root(&self, callback: Subscriber) -> Subscription {
-    //     // self.doc.subscribe_root(callback)
-    //     self.doc.subscribe_root(Arc::new(move |e| {
-    //         callback(DiffEvent::from(e));
-    //     }))
-    // }
+    /// Subscribe all the events.
+    ///
+    /// The callback will be invoked when any part of the [loro_internal::DocState] is changed.
+    /// Returns a subscription that can be used to unsubscribe.
+    ///
+    /// The events will be emitted after a transaction is committed. A transaction is committed when:
+    ///
+    /// - `doc.commit()` is called.
+    /// - `doc.export(mode)` is called.
+    /// - `doc.import(data)` is called.
+    /// - `doc.checkout(version)` is called.
+    #[inline]
+    pub fn subscribe_root(&self, callback: PyObject) -> Subscription {
+        let subscription = self.doc.subscribe_root(Arc::new(move |e| {
+            Python::with_gil(|py| {
+                callback.call1(py, (DiffEvent::from(e),)).unwrap();
+            });
+        }));
+        subscription.into()
+    }
 
     // /// Subscribe the local update of the document.
     // pub fn subscribe_local_update(&self, callback: LocalUpdateCallback) -> Subscription {
@@ -617,17 +618,19 @@ impl LoroDoc {
     //     self.doc.check_state_diff_calc_consistency_slow()
     // }
 
-    // /// Get the handler by the path.
-    // #[inline]
-    // pub fn get_by_path(&self, path: &[Index]) -> Option<ValueOrContainer> {
-    //     self.doc.get_by_path(path).map(ValueOrContainer::from)
-    // }
+    /// Get the handler by the path.
+    #[inline]
+    pub fn get_by_path(&self, path: Vec<Index>) -> Option<ValueOrContainer> {
+        self.doc
+            .get_by_path(&path.iter().map(|x| x.into()).collect::<Vec<_>>())
+            .map(ValueOrContainer::from)
+    }
 
-    // /// Get the handler by the string path.
-    // #[inline]
-    // pub fn get_by_str_path(&self, path: &str) -> Option<ValueOrContainer> {
-    //     self.doc.get_by_str_path(path).map(ValueOrContainer::from)
-    // }
+    /// Get the handler by the string path.
+    #[inline]
+    pub fn get_by_str_path(&self, path: &str) -> Option<ValueOrContainer> {
+        self.doc.get_by_str_path(path).map(ValueOrContainer::from)
+    }
 
     // /// Get the absolute position of the given cursor.
     // ///
@@ -661,34 +664,34 @@ impl LoroDoc {
     // //     &self.doc
     // // }
 
-    // /// Whether the history cache is built.
-    // #[inline]
-    // pub fn has_history_cache(&self) -> bool {
-    //     self.doc.has_history_cache()
-    // }
+    /// Whether the history cache is built.
+    #[inline]
+    pub fn has_history_cache(&self) -> bool {
+        self.doc.has_history_cache()
+    }
 
-    // /// Free the history cache that is used for making checkout faster.
-    // ///
-    // /// If you use checkout that switching to an old/concurrent version, the history cache will be built.
-    // /// You can free it by calling this method.
-    // #[inline]
-    // pub fn free_history_cache(&self) {
-    //     self.doc.free_history_cache()
-    // }
+    /// Free the history cache that is used for making checkout faster.
+    ///
+    /// If you use checkout that switching to an old/concurrent version, the history cache will be built.
+    /// You can free it by calling this method.
+    #[inline]
+    pub fn free_history_cache(&self) {
+        self.doc.free_history_cache()
+    }
 
-    // /// Free the cached diff calculator that is used for checkout.
-    // #[inline]
-    // pub fn free_diff_calculator(&self) {
-    //     self.doc.free_diff_calculator()
-    // }
+    /// Free the cached diff calculator that is used for checkout.
+    #[inline]
+    pub fn free_diff_calculator(&self) {
+        self.doc.free_diff_calculator()
+    }
 
-    // /// Encoded all ops and history cache to bytes and store them in the kv store.
-    // ///
-    // /// This will free up the memory that used by parsed ops
-    // #[inline]
-    // pub fn compact_change_store(&self) {
-    //     self.doc.compact_change_store()
-    // }
+    /// Encoded all ops and history cache to bytes and store them in the kv store.
+    ///
+    /// This will free up the memory that used by parsed ops
+    #[inline]
+    pub fn compact_change_store(&self) {
+        self.doc.compact_change_store()
+    }
 
     // /// Export the document in the given mode.
     // pub fn export(&self, mode: ExportMode) -> Result<Vec<u8>, LoroEncodeError> {
@@ -703,60 +706,60 @@ impl LoroDoc {
     // //     self.doc.analyze()
     // // }
 
-    // /// Get the path from the root to the container
-    // pub fn get_path_to_container(&self, id: &ContainerID) -> Option<Vec<(ContainerID, Index)>> {
-    //     self.doc.get_path_to_container(id)
-    // }
+    /// Get the path from the root to the container
+    pub fn get_path_to_container(&self, id: &ContainerID) -> Option<Vec<(ContainerID, Index)>> {
+        self.doc.get_path_to_container(&id.into()).map(|v| {
+            v.into_iter()
+                .map(|(id, index)| (ContainerID::from(id), (&index).into()))
+                .collect()
+        })
+    }
 
-    // /// Evaluate a JSONPath expression on the document and return matching values or handlers.
-    // ///
-    // /// This method allows querying the document structure using JSONPath syntax.
-    // /// It returns a vector of `ValueOrHandler` which can represent either primitive values
-    // /// or container handlers, depending on what the JSONPath expression matches.
-    // ///
-    // /// # Arguments
-    // ///
-    // /// * `path` - A string slice containing the JSONPath expression to evaluate.
-    // ///
-    // /// # Returns
-    // ///
-    // /// A `Result` containing either:
-    // /// - `Ok(Vec<ValueOrHandler>)`: A vector of matching values or handlers.
-    // /// - `Err(String)`: An error message if the JSONPath expression is invalid or evaluation fails.
-    // ///
-    // /// # Example
-    // ///
-    // /// ```
-    // /// # use loro::{LoroDoc, ToJson};
-    // ///
-    // /// let doc = LoroDoc::new();
-    // /// let map = doc.get_map("users");
-    // /// map.insert("alice", 30).unwrap();
-    // /// map.insert("bob", 25).unwrap();
-    // ///
-    // /// let result = doc.jsonpath("$.users.alice").unwrap();
-    // /// assert_eq!(result.len(), 1);
-    // /// assert_eq!(result[0].as_value().unwrap().to_json_value(), serde_json::json!(30));
-    // /// ```
-    // #[inline]
-    // pub fn jsonpath(&self, path: &str) -> Result<Vec<ValueOrContainer>, JsonPathError> {
-    //     self.doc.jsonpath(path).map(|vec| {
-    //         vec.into_iter()
-    //             .map(|v| match v {
-    //                 ValueOrHandler::Value(v) => ValueOrContainer::Value(v),
-    //                 ValueOrHandler::Handler(h) => ValueOrContainer::Container(h.into()),
-    //             })
-    //             .collect()
-    //     })
-    // }
+    /// Evaluate a JSONPath expression on the document and return matching values or handlers.
+    ///
+    /// This method allows querying the document structure using JSONPath syntax.
+    /// It returns a vector of `ValueOrHandler` which can represent either primitive values
+    /// or container handlers, depending on what the JSONPath expression matches.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - A string slice containing the JSONPath expression to evaluate.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing either:
+    /// - `Ok(Vec<ValueOrHandler>)`: A vector of matching values or handlers.
+    /// - `Err(String)`: An error message if the JSONPath expression is invalid or evaluation fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use loro::{LoroDoc, ToJson};
+    ///
+    /// let doc = LoroDoc::new();
+    /// let map = doc.get_map("users");
+    /// map.insert("alice", 30).unwrap();
+    /// map.insert("bob", 25).unwrap();
+    ///
+    /// let result = doc.jsonpath("$.users.alice").unwrap();
+    /// assert_eq!(result.len(), 1);
+    /// assert_eq!(result[0].as_value().unwrap().to_json_value(), serde_json::json!(30));
+    /// ```
+    #[inline]
+    pub fn jsonpath(&self, path: &str) -> PyResult<Vec<ValueOrContainer>> {
+        self.doc
+            .jsonpath(path)
+            .map(|vec| vec.into_iter().map(|v| v.into()).collect())
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
 
-    // /// Get the number of operations in the pending transaction.
-    // ///
-    // /// The pending transaction is the one that is not committed yet. It will be committed
-    // /// after calling `doc.commit()`, `doc.export(mode)` or `doc.checkout(version)`.
-    // pub fn get_pending_txn_len(&self) -> usize {
-    //     self.doc.get_pending_txn_len()
-    // }
+    /// Get the number of operations in the pending transaction.
+    ///
+    /// The pending transaction is the one that is not committed yet. It will be committed
+    /// after calling `doc.commit()`, `doc.export(mode)` or `doc.checkout(version)`.
+    pub fn get_pending_txn_len(&self) -> usize {
+        self.doc.get_pending_txn_len()
+    }
 
     // /// Traverses the ancestors of the Change containing the given ID, including itself.
     // ///
@@ -775,25 +778,29 @@ impl LoroDoc {
     //     self.doc.travel_change_ancestors(ids, f)
     // }
 
-    // /// Check if the doc contains the full history.
-    // pub fn is_shallow(&self) -> bool {
-    //     self.doc.is_shallow()
-    // }
+    /// Check if the doc contains the full history.
+    pub fn is_shallow(&self) -> bool {
+        self.doc.is_shallow()
+    }
 
-    // /// Gets container IDs modified in the given ID range.
-    // ///
-    // /// **NOTE:** This method will implicitly commit.
-    // ///
-    // /// This method can be used in conjunction with `doc.travel_change_ancestors()` to traverse
-    // /// the history and identify all changes that affected specific containers.
-    // ///
-    // /// # Arguments
-    // ///
-    // /// * `id` - The starting ID of the change range
-    // /// * `len` - The length of the change range to check
-    // pub fn get_changed_containers_in(&self, id: ID, len: usize) -> FxHashSet<ContainerID> {
-    //     self.doc.get_changed_containers_in(id, len)
-    // }
+    /// Gets container IDs modified in the given ID range.
+    ///
+    /// **NOTE:** This method will implicitly commit.
+    ///
+    /// This method can be used in conjunction with `doc.travel_change_ancestors()` to traverse
+    /// the history and identify all changes that affected specific containers.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The starting ID of the change range
+    /// * `len` - The length of the change range to check
+    pub fn get_changed_containers_in(&self, id: ID, len: usize) -> HashSet<ContainerID> {
+        self.doc
+            .get_changed_containers_in(id.into(), len)
+            .into_iter()
+            .map(ContainerID::from)
+            .collect()
+    }
 }
 
 #[pyclass(frozen)]
