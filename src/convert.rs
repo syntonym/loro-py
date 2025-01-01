@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     sync::{Arc, Mutex},
 };
@@ -16,8 +17,12 @@ use crate::{
         Container, Cursor, LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree,
         LoroUnknown, Side, UpdateOptions,
     },
+    doc::{
+        AbsolutePosition, ChangeMeta, CounterSpan, EncodedBlobMode, ExportMode, IdSpan,
+        ImportBlobMetadata, PosQueryResult,
+    },
     event::{
-        ContainerDiff, Diff, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
+        ContainerDiff, Diff, DiffEvent, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
         Subscription, TextDelta, TreeDiff, TreeDiffItem, TreeExternalDiff,
     },
     value::{
@@ -112,28 +117,6 @@ pub fn pyobject_to_container_id(
     }
 
     Err(PyTypeError::new_err("Invalid ContainerID"))
-}
-
-pub fn pyobject_to_container(py: Python<'_>, obj: PyObject) -> PyResult<Container> {
-    if let Ok(value) = obj.downcast_bound::<LoroText>(py) {
-        return Ok(Container::Text(value.get().clone()));
-    }
-    if let Ok(value) = obj.downcast_bound::<LoroMap>(py) {
-        return Ok(Container::Map(value.get().clone()));
-    }
-    if let Ok(value) = obj.downcast_bound::<LoroList>(py) {
-        return Ok(Container::List(value.get().clone()));
-    }
-    if let Ok(value) = obj.downcast_bound::<LoroMovableList>(py) {
-        return Ok(Container::MovableList(value.get().clone()));
-    }
-    if let Ok(value) = obj.downcast_bound::<LoroTree>(py) {
-        return Ok(Container::Tree(value.get().clone()));
-    }
-    if let Ok(value) = obj.downcast_bound::<LoroCounter>(py) {
-        return Ok(Container::Counter(value.get().clone()));
-    }
-    Err(PyTypeError::new_err("Invalid Container"))
 }
 
 pub fn pyobject_to_loro_value(py: Python<'_>, obj: PyObject) -> PyResult<loro::LoroValue> {
@@ -593,6 +576,17 @@ impl From<&loro::TextDelta> for TextDelta {
     }
 }
 
+impl From<loro::event::DiffEvent<'_>> for DiffEvent {
+    fn from(diff_event: loro::event::DiffEvent) -> Self {
+        Self {
+            triggered_by: diff_event.triggered_by.into(),
+            origin: diff_event.origin.to_string(),
+            current_target: diff_event.current_target.map(|v| v.into()),
+            events: diff_event.events.iter().map(ContainerDiff::from).collect(),
+        }
+    }
+}
+
 impl From<Side> for loro::cursor::Side {
     fn from(value: Side) -> Self {
         match value {
@@ -628,5 +622,97 @@ impl From<loro::cursor::Cursor> for Cursor {
 impl From<loro::Subscription> for Subscription {
     fn from(value: loro::Subscription) -> Self {
         Subscription(Mutex::new(Some(value)))
+    }
+}
+
+impl From<loro::cursor::PosQueryResult> for PosQueryResult {
+    fn from(value: loro::cursor::PosQueryResult) -> Self {
+        Self {
+            update: value.update.map(|c| c.into()),
+            current: AbsolutePosition {
+                pos: value.current.pos,
+                side: value.current.side.into(),
+            },
+        }
+    }
+}
+
+impl From<IdSpan> for loro::IdSpan {
+    fn from(value: IdSpan) -> Self {
+        loro::IdSpan {
+            peer: value.peer,
+            counter: value.counter.into(),
+        }
+    }
+}
+
+impl From<CounterSpan> for loro::CounterSpan {
+    fn from(value: CounterSpan) -> Self {
+        loro::CounterSpan {
+            start: value.start,
+            end: value.end,
+        }
+    }
+}
+
+impl From<ExportMode> for loro::ExportMode<'_> {
+    fn from(value: ExportMode) -> Self {
+        match value {
+            ExportMode::Snapshot => loro::ExportMode::Snapshot,
+            ExportMode::Updates { from } => loro::ExportMode::Updates {
+                from: Cow::Owned(from.into()),
+            },
+            ExportMode::UpdatesInRange { spans } => loro::ExportMode::UpdatesInRange {
+                spans: Cow::Owned(spans.into_iter().map(|s| s.into()).collect()),
+            },
+            ExportMode::ShallowSnapshot { frontiers } => {
+                loro::ExportMode::ShallowSnapshot(Cow::Owned(frontiers.into()))
+            }
+            ExportMode::StateOnly { frontiers } => {
+                loro::ExportMode::StateOnly(frontiers.map(|f| Cow::Owned(f.into())))
+            }
+            ExportMode::SnapshotAt { version } => loro::ExportMode::SnapshotAt {
+                version: Cow::Owned(version.into()),
+            },
+        }
+    }
+}
+
+impl From<loro::ChangeMeta> for ChangeMeta {
+    fn from(value: loro::ChangeMeta) -> Self {
+        ChangeMeta {
+            lamport: value.lamport,
+            id: value.id.into(),
+            timestamp: value.timestamp,
+            message: value.message.map(|m| m.to_string()),
+            deps: value.deps.into(),
+            len: value.len,
+        }
+    }
+}
+
+impl From<loro::ImportBlobMetadata> for ImportBlobMetadata {
+    fn from(value: loro::ImportBlobMetadata) -> Self {
+        Self {
+            partial_start_vv: value.partial_start_vv.into(),
+            partial_end_vv: value.partial_end_vv.into(),
+            start_timestamp: value.start_timestamp,
+            start_frontiers: value.start_frontiers.into(),
+            end_timestamp: value.end_timestamp,
+            change_num: value.change_num,
+            mode: match value.mode {
+                loro_internal::encoding::EncodedBlobMode::Snapshot => EncodedBlobMode::Snapshot,
+                loro_internal::encoding::EncodedBlobMode::OutdatedSnapshot => {
+                    EncodedBlobMode::OutdatedSnapshot
+                }
+                loro_internal::encoding::EncodedBlobMode::ShallowSnapshot => {
+                    EncodedBlobMode::ShallowSnapshot
+                }
+                loro_internal::encoding::EncodedBlobMode::OutdatedRle => {
+                    EncodedBlobMode::OutdatedRle
+                }
+                loro_internal::encoding::EncodedBlobMode::Updates => EncodedBlobMode::Updates,
+            },
+        }
     }
 }

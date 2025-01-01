@@ -89,30 +89,30 @@ impl From<loro::VersionRange> for VersionRange {
     }
 }
 
-#[pyclass(frozen, str)]
-#[derive(Debug)]
-pub struct VersionVector(RwLock<loro::VersionVector>);
+#[pyclass(str)]
+#[derive(Debug, Clone)]
+pub struct VersionVector(loro::VersionVector);
 
 impl Default for VersionVector {
     fn default() -> Self {
-        Self(RwLock::new(loro::VersionVector::new()))
+        Self(loro::VersionVector::new())
     }
 }
 
 impl Display for VersionVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.0.read().unwrap())
+        write!(f, "{:?}", self.0)
     }
 }
 
-impl From<&VersionVector> for loro::VersionVector {
-    fn from(value: &VersionVector) -> Self {
-        value.0.read().unwrap().clone()
+impl From<VersionVector> for loro::VersionVector {
+    fn from(value: VersionVector) -> Self {
+        value.0
     }
 }
 
 impl From<loro::VersionVector> for VersionVector {
     fn from(value: loro::VersionVector) -> Self {
-        Self(RwLock::new(value))
+        Self(value)
     }
 }

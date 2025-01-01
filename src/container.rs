@@ -15,8 +15,7 @@ pub use text::*;
 pub use tree::LoroTree;
 pub use unknown::LoroUnknown;
 
-#[pyclass(frozen)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 pub enum Container {
     List(LoroList),
     Map(LoroMap),
@@ -28,7 +27,6 @@ pub enum Container {
 }
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<Container>()?;
     text::register_class(m)?;
     map::register_class(m)?;
     m.add_class::<LoroList>()?;

@@ -524,6 +524,7 @@ version = "1.2.5-alpha.0"
 dependencies = [
  "fxhash",
  "loro",
+ "loro-internal",
  "pyo3",
 ]
 

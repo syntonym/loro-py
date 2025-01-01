@@ -54,17 +54,6 @@ impl fmt::Display for DiffEvent {
     }
 }
 
-impl From<loro::event::DiffEvent<'_>> for DiffEvent {
-    fn from(diff_event: loro::event::DiffEvent) -> Self {
-        Self {
-            triggered_by: diff_event.triggered_by.into(),
-            origin: diff_event.origin.to_string(),
-            current_target: diff_event.current_target.map(|v| v.into()),
-            events: diff_event.events.iter().map(ContainerDiff::from).collect(),
-        }
-    }
-}
-
 /// The kind of the event trigger.
 #[pyclass(eq, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

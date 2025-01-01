@@ -2,10 +2,12 @@ use loro::{LoroMap as LoroMapInner, PeerID};
 use pyo3::prelude::*;
 
 use crate::{
-    convert::{pyobject_to_container, pyobject_to_loro_value},
+    convert::pyobject_to_loro_value,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, ValueOrContainer},
 };
+
+use super::Container;
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LoroMap>()?;
@@ -87,10 +89,16 @@ impl LoroMap {
     /// text.insert(0, "0");
     /// assert_eq!(doc.get_deep_value().to_json_value(), json!({"m": {"t": "012"}}));
     /// ```
-    pub fn insert_container(&self, py: Python, key: &str, child: PyObject) -> PyLoroResult<()> {
-        let child = pyobject_to_container(py, child)?;
-        self.0.insert_container(key, loro::Container::from(child))?;
-        Ok(())
+    pub fn insert_container(
+        &self,
+        py: Python,
+        key: &str,
+        child: PyObject,
+    ) -> PyLoroResult<Container> {
+        let container = self
+            .0
+            .insert_container(key, loro::Container::from(child.extract::<Container>(py)?))?;
+        Ok(container.into())
     }
 
     /// Get the shallow value of the map.
@@ -113,11 +121,11 @@ impl LoroMap {
         py: Python,
         key: &str,
         child: PyObject,
-    ) -> PyLoroResult<()> {
-        let child = pyobject_to_container(py, child)?;
-        self.0
-            .get_or_create_container(key, loro::Container::from(child))?;
-        Ok(())
+    ) -> PyLoroResult<Container> {
+        let container = self
+            .0
+            .get_or_create_container(key, loro::Container::from(child.extract::<Container>(py)?))?;
+        Ok(container.into())
     }
 
     /// Delete all key-value pairs in the map.
@@ -129,7 +137,7 @@ impl LoroMap {
     // TODO: iter
     /// Get the keys of the map.
     pub fn keys(&self) -> Vec<String> {
-        self.0.keys().into_iter().map(|k| k.to_string()).collect()
+        self.0.keys().map(|k| k.to_string()).collect()
     }
 
     /// Get the values of the map.

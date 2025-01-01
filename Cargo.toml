@@ -13,5 +13,9 @@ loro = { git = "https://github.com/loro-dev/loro.git", tag = "loro-crdt@1.2.5", 
     "counter",
     "jsonpath",
 ] }
+loro-internal = { git = "https://github.com/loro-dev/loro.git", tag = "loro-crdt@1.2.5", features = [
+    "counter",
+    "jsonpath",
+] }
 fxhash = "0.2.1"
 pyo3 = { version = "0.23.3", features = ["extension-module"] }

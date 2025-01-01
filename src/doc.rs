@@ -1,9 +1,15 @@
-use loro::{LoroDoc as LoroDocInner, PeerID, Timestamp};
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
-use std::{collections::HashSet, fmt::Display, sync::Arc};
+use loro::{Counter, Lamport, LoroDoc as LoroDocInner, PeerID, Timestamp};
+use pyo3::{
+    exceptions::PyValueError,
+    prelude::*,
+    types::{PyBytes, PyDict, PyType},
+};
+use std::{collections::HashSet, fmt::Display, ops::ControlFlow, sync::Arc};
 
 use crate::{
-    container::{LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree},
+    container::{
+        Cursor, LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree, Side,
+    },
     convert::pyobject_to_container_id,
     err::PyLoroResult,
     event::{DiffEvent, Index, Subscription},
@@ -16,6 +22,13 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Configure>()?;
     m.add_class::<ImportStatus>()?;
     m.add_class::<CommitOptions>()?;
+    m.add_class::<IdSpan>()?;
+    m.add_class::<CounterSpan>()?;
+    m.add_class::<ChangeMeta>()?;
+    m.add_class::<ImportBlobMetadata>()?;
+    m.add_class::<EncodedBlobMode>()?;
+    m.add_class::<CounterSpan>()?;
+    m.add_class::<IdSpan>()?;
     Ok(())
 }
 
@@ -78,22 +91,20 @@ impl LoroDoc {
     /// - The second op's lamport is `change.lamport + 1`
     ///
     /// The length of the `Change` is how many operations it contains
-    // TODO:
-    // pub fn get_change(&self, id: ID) -> Option<ChangeMeta> {
-    //     let change = self.doc.oplog().try_lock().unwrap().get_change_at(id)?;
-    //     Some(ChangeMeta::from_change(&change))
-    // }
+    pub fn get_change(&self, id: ID) -> Option<ChangeMeta> {
+        self.doc.get_change(id.into()).map(|meta| meta.into())
+    }
 
     /// Decodes the metadata for an imported blob from the provided bytes.
-    // TODO:
-    // #[classmethod]
-    // pub fn decode_import_blob_meta(
-    //     cls: &PyType,
-    //     bytes: &[u8],
-    //     check_checksum: bool,
-    // ) -> LoroResult<ImportBlobMetadata> {
-    //     LoroDocInner::decode_import_blob_meta(bytes, check_checksum)
-    // }
+    #[classmethod]
+    pub fn decode_import_blob_meta(
+        _cls: &Bound<'_, PyType>,
+        bytes: &[u8],
+        check_checksum: bool,
+    ) -> PyLoroResult<ImportBlobMetadata> {
+        let meta = LoroDocInner::decode_import_blob_meta(bytes, check_checksum)?;
+        Ok(meta.into())
+    }
 
     /// Set whether to record the timestamp of each change. Default is `false`.
     ///
@@ -148,13 +159,14 @@ impl LoroDoc {
         self.doc.set_change_merge_interval(interval);
     }
 
-    /// Set the rich text format configuration of the document.
-    ///
-    /// You need to config it if you use rich text `mark` method.
-    /// Specifically, you need to config the `expand` property of each style.
-    ///
-    /// Expand is used to specify the behavior of expanding when new text is inserted at the
-    /// beginning or end of the style.
+    // TODO:
+    // /// Set the rich text format configuration of the document.
+    // ///
+    // /// You need to config it if you use rich text `mark` method.
+    // /// Specifically, you need to config the `expand` property of each style.
+    // ///
+    // /// Expand is used to specify the behavior of expanding when new text is inserted at the
+    // /// beginning or end of the style.
     // #[inline]
     // pub fn config_text_style(&self, text_style: StyleConfigMap) {
     //     self.doc.config_text_style(text_style)
@@ -331,6 +343,7 @@ impl LoroDoc {
     }
 
     /// Import updates/snapshot exported by [`LoroDoc::export_snapshot`] or [`LoroDoc::export_from`].
+    #[pyo3(name = "import_")]
     #[inline]
     pub fn import(&self, bytes: &[u8]) -> PyLoroResult<ImportStatus> {
         let status = self.doc.import(bytes)?;
@@ -403,8 +416,8 @@ impl LoroDoc {
 
     /// Convert `VersionVector` into `Frontiers`
     #[inline]
-    pub fn vv_to_frontiers(&self, vv: &VersionVector) -> Frontiers {
-        self.doc.vv_to_frontiers(&(vv.into())).into()
+    pub fn vv_to_frontiers(&self, vv: VersionVector) -> Frontiers {
+        self.doc.vv_to_frontiers(&vv.into()).into()
     }
 
     // /// Access the `OpLog`.
@@ -585,6 +598,7 @@ impl LoroDoc {
     /// - `doc.export(mode)` is called.
     /// - `doc.import(data)` is called.
     /// - `doc.checkout(version)` is called.
+    // TODO: how we deal with the return value of the callback?
     #[inline]
     pub fn subscribe_root(&self, callback: PyObject) -> Subscription {
         let subscription = self.doc.subscribe_root(Arc::new(move |e| {
@@ -595,15 +609,27 @@ impl LoroDoc {
         subscription.into()
     }
 
-    // /// Subscribe the local update of the document.
-    // pub fn subscribe_local_update(&self, callback: LocalUpdateCallback) -> Subscription {
-    //     self.doc.subscribe_local_update(callback)
-    // }
+    /// Subscribe the local update of the document.
+    pub fn subscribe_local_update(&self, callback: PyObject) -> Subscription {
+        let subscription = self.doc.subscribe_local_update(Box::new(move |updates| {
+            Python::with_gil(|py| {
+                let b = callback.call1(py, (updates,)).unwrap();
+                b.extract::<bool>(py).unwrap()
+            })
+        }));
+        subscription.into()
+    }
 
-    // /// Subscribe the peer id change of the document.
-    // pub fn subscribe_peer_id_change(&self, callback: PeerIdUpdateCallback) -> Subscription {
-    //     self.doc.subscribe_peer_id_change(callback)
-    // }
+    /// Subscribe the peer id change of the document.
+    pub fn subscribe_peer_id_change(&self, callback: PyObject) -> Subscription {
+        let subscription = self.doc.subscribe_peer_id_change(Box::new(move |id| {
+            Python::with_gil(|py| {
+                let b = callback.call1(py, (ID::from(*id),)).unwrap();
+                b.extract::<bool>(py).unwrap()
+            })
+        }));
+        subscription.into()
+    }
 
     // /// Estimate the size of the document states in memory.
     // #[inline]
@@ -632,31 +658,29 @@ impl LoroDoc {
         self.doc.get_by_str_path(path).map(ValueOrContainer::from)
     }
 
-    // /// Get the absolute position of the given cursor.
-    // ///
-    // /// # Example
-    // ///
-    // /// ```
-    // /// # use loro::{LoroDoc, ToJson};
-    // /// let doc = LoroDoc::new();
-    // /// let text = &doc.get_text("text");
-    // /// text.insert(0, "01234").unwrap();
-    // /// let pos = text.get_cursor(5, Default::default()).unwrap();
-    // /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 5);
-    // /// text.insert(0, "01234").unwrap();
-    // /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 10);
-    // /// text.delete(0, 10).unwrap();
-    // /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 0);
-    // /// text.insert(0, "01234").unwrap();
-    // /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 5);
-    // /// ```
-    // #[inline]
-    // pub fn get_cursor_pos(
-    //     &self,
-    //     cursor: &Cursor,
-    // ) -> Result<PosQueryResult, CannotFindRelativePosition> {
-    //     self.doc.query_pos(cursor)
-    // }
+    /// Get the absolute position of the given cursor.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use loro::{LoroDoc, ToJson};
+    /// let doc = LoroDoc::new();
+    /// let text = &doc.get_text("text");
+    /// text.insert(0, "01234").unwrap();
+    /// let pos = text.get_cursor(5, Default::default()).unwrap();
+    /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 5);
+    /// text.insert(0, "01234").unwrap();
+    /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 10);
+    /// text.delete(0, 10).unwrap();
+    /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 0);
+    /// text.insert(0, "01234").unwrap();
+    /// assert_eq!(doc.get_cursor_pos(&pos).unwrap().current.pos, 5);
+    /// ```
+    #[inline]
+    pub fn get_cursor_pos(&self, cursor: Cursor) -> PyLoroResult<PosQueryResult> {
+        let result = self.doc.get_cursor_pos(&cursor.into())?;
+        Ok(result.into())
+    }
 
     // /// Get the inner LoroDoc ref.
     // // #[inline]
@@ -693,10 +717,11 @@ impl LoroDoc {
         self.doc.compact_change_store()
     }
 
-    // /// Export the document in the given mode.
-    // pub fn export(&self, mode: ExportMode) -> Result<Vec<u8>, LoroEncodeError> {
-    //     self.doc.export(mode)
-    // }
+    /// Export the document in the given mode.
+    pub fn export(&self, py: Python, mode: PyObject) -> PyLoroResult<Vec<u8>> {
+        let ans = self.doc.export(mode.extract::<ExportMode>(py)?.into())?;
+        Ok(ans)
+    }
 
     // /// Analyze the container info of the doc
     // ///
@@ -761,22 +786,34 @@ impl LoroDoc {
         self.doc.get_pending_txn_len()
     }
 
-    // /// Traverses the ancestors of the Change containing the given ID, including itself.
-    // ///
-    // /// This method visits all ancestors in causal order, from the latest to the oldest,
-    // /// based on their Lamport timestamps.
-    // ///
-    // /// # Arguments
-    // ///
-    // /// * `ids` - The IDs of the Change to start the traversal from.
-    // /// * `f` - A mutable function that is called for each ancestor. It can return `ControlFlow::Break(())` to stop the traversal.
-    // pub fn travel_change_ancestors(
-    //     &self,
-    //     ids: &[ID],
-    //     f: &mut dyn FnMut(ChangeMeta) -> ControlFlow<()>,
-    // ) -> Result<(), ChangeTravelError> {
-    //     self.doc.travel_change_ancestors(ids, f)
-    // }
+    /// Traverses the ancestors of the Change containing the given ID, including itself.
+    ///
+    /// This method visits all ancestors in causal order, from the latest to the oldest,
+    /// based on their Lamport timestamps.
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - The IDs of the Change to start the traversal from.
+    /// * `cb` - A callback function that is called for each ancestor. It can return `ControlFlow::Break(())` to stop the traversal.
+    pub fn travel_change_ancestors(&self, ids: Vec<ID>, cb: PyObject) -> PyLoroResult<()> {
+        self.doc.travel_change_ancestors(
+            &ids.into_iter().map(|id| id.into()).collect::<Vec<_>>(),
+            &mut |meta| {
+                let b = Python::with_gil(|py| {
+                    cb.call1(py, (ChangeMeta::from(meta),))
+                        .unwrap()
+                        .extract::<bool>(py)
+                        .unwrap()
+                });
+                if b {
+                    ControlFlow::Break(())
+                } else {
+                    ControlFlow::Continue(())
+                }
+            },
+        )?;
+        Ok(())
+    }
 
     /// Check if the doc contains the full history.
     pub fn is_shallow(&self) -> bool {
@@ -861,4 +898,165 @@ impl Display for CommitOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, IntoPyObject)]
+pub struct PosQueryResult {
+    pub update: Option<Cursor>,
+    pub current: AbsolutePosition,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, IntoPyObject)]
+pub struct AbsolutePosition {
+    pub pos: usize,
+    /// The target position is at the left, middle, or right of the given pos.
+    pub side: Side,
+}
+
+pub enum ExportMode {
+    Snapshot,
+    Updates { from: VersionVector },
+    UpdatesInRange { spans: Vec<IdSpan> },
+    ShallowSnapshot { frontiers: Frontiers },
+    StateOnly { frontiers: Option<Frontiers> },
+    SnapshotAt { version: Frontiers },
+}
+
+impl<'py> FromPyObject<'py> for ExportMode {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let dict = ob
+            .downcast::<PyDict>()
+            .map_err(|_| PyErr::new::<PyValueError, _>("Expected a dictionary for export mode"))?;
+
+        let mode = dict
+            .get_item("mode")?
+            .ok_or_else(|| PyErr::new::<PyValueError, _>("mode is required"))?
+            .extract::<String>()?;
+
+        match mode.as_str() {
+            "snapshot" => Ok(ExportMode::Snapshot),
+            "updates" => {
+                let from = dict
+                    .get_item("from")?
+                    .ok_or_else(|| {
+                        PyErr::new::<PyValueError, _>("from is required for updates mode")
+                    })?
+                    .extract::<VersionVector>()?;
+                Ok(ExportMode::Updates { from })
+            }
+            "updates_in_range" => {
+                let spans = dict
+                    .get_item("spans")?
+                    .ok_or_else(|| {
+                        PyErr::new::<PyValueError, _>("spans is required for updates_in_range mode")
+                    })?
+                    .extract::<Vec<IdSpan>>()?;
+                Ok(ExportMode::UpdatesInRange { spans })
+            }
+            "shallow_snapshot" => {
+                let frontiers = dict
+                    .get_item("frontiers")?
+                    .ok_or_else(|| {
+                        PyErr::new::<PyValueError, _>(
+                            "frontiers is required for shallow_snapshot mode",
+                        )
+                    })?
+                    .extract::<Frontiers>()?;
+                Ok(ExportMode::ShallowSnapshot { frontiers })
+            }
+            "state_only" => {
+                let frontiers = dict
+                    .get_item("frontiers")?
+                    .ok_or_else(|| {
+                        PyErr::new::<PyValueError, _>("frontiers is required for state_only mode")
+                    })?
+                    .extract::<Option<Frontiers>>()?;
+                Ok(ExportMode::StateOnly { frontiers })
+            }
+            "snapshot_at" => {
+                let version = dict
+                    .get_item("version")?
+                    .ok_or_else(|| {
+                        PyErr::new::<PyValueError, _>("version is required for snapshot_at mode")
+                    })?
+                    .extract::<Frontiers>()?;
+                Ok(ExportMode::SnapshotAt { version })
+            }
+            _ => Err(PyErr::new::<PyValueError, _>(format!(
+                "Invalid export mode: {}",
+                mode
+            ))),
+        }
+    }
+}
+
+/// This struct supports reverse repr: [CounterSpan]'s from can be less than to. But we should use it conservatively.
+/// We need this because it'll make merging deletions easier.
+#[pyclass(get_all, set_all, eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct IdSpan {
+    pub peer: PeerID,
+    pub counter: CounterSpan,
+}
+
+/// This struct supports reverse repr: `from` can be less than `to`.
+/// We need this because it'll make merging deletions easier.
+///
+/// But we should use it behavior conservatively.
+/// If it is not necessary to be reverse, it should not.
+#[pyclass(get_all, set_all, eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct CounterSpan {
+    pub start: Counter,
+    pub end: Counter,
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Clone)]
+pub struct ChangeMeta {
+    /// Lamport timestamp of the Change
+    pub lamport: Lamport,
+    /// The first Op id of the Change
+    pub id: ID,
+    /// [Unix time](https://en.wikipedia.org/wiki/Unix_time)
+    /// It is the number of seconds that have elapsed since 00:00:00 UTC on 1 January 1970.
+    pub timestamp: Timestamp,
+    /// The commit message of the change
+    pub message: Option<String>,
+    /// The dependencies of the first op of the change
+    pub deps: Frontiers,
+    /// The total op num inside this change
+    pub len: usize,
+}
+
+#[pyclass(get_all, set_all)]
+#[derive(Clone)]
+pub struct ImportBlobMetadata {
+    /// The partial start version vector.
+    ///
+    /// Import blob includes all the ops from `partial_start_vv` to `partial_end_vv`.
+    /// However, it does not constitute a complete version vector, as it only contains counters
+    /// from peers included within the import blob.
+    pub partial_start_vv: VersionVector,
+    /// The partial end version vector.
+    ///
+    /// Import blob includes all the ops from `partial_start_vv` to `partial_end_vv`.
+    /// However, it does not constitute a complete version vector, as it only contains counters
+    /// from peers included within the import blob.
+    pub partial_end_vv: VersionVector,
+    pub start_timestamp: i64,
+    pub start_frontiers: Frontiers,
+    pub end_timestamp: i64,
+    pub change_num: u32,
+    pub mode: EncodedBlobMode,
+}
+
+#[pyclass(eq, eq_int)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EncodedBlobMode {
+    Snapshot,
+    OutdatedSnapshot,
+    ShallowSnapshot,
+    OutdatedRle,
+    Updates,
 }

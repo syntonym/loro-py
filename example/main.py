@@ -1,14 +1,25 @@
-from loro import LoroDoc
+from loro import LoroDoc, LoroText,  LoroValue
 
 if __name__ == "__main__":
     doc = LoroDoc()
     text = doc.get_text("text")
     map = doc.get_map("map")
-    sub =  doc.subscribe_root(lambda event: print(event))
+    # sub =  doc.subscribe_root(lambda event: print(event))
     text.insert(0, "abc")
     map.insert("key", "value")
     doc.commit()
     print(text.to_string())
     print(map.get_value())
-    sub()
+    text2 = map.get_or_create_container("text", LoroText())
+    print(text2)
+    text2.insert(0, "def")
+    doc.commit()
+    print()
+    v = doc.get_deep_value()
+    print(v)
+    # sub()
+    update = doc.export({"mode": "snapshot"})
+    doc2 = LoroDoc()
+    status = doc2.import_(update)
+    print(status)
 
