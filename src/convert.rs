@@ -9,6 +9,7 @@ use pyo3::{
 };
 
 use crate::{
+    awareness::PeerInfo,
     container::{
         Container, Cursor, LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree,
         LoroUnknown, Side, TreeNode, UpdateOptions,
@@ -791,6 +792,16 @@ impl From<loro::undo::CursorWithPos> for CursorWithPos {
         Self {
             cursor: value.cursor.into(),
             pos: value.pos.into(),
+        }
+    }
+}
+
+impl From<&loro::awareness::PeerInfo> for PeerInfo {
+    fn from(value: &loro::awareness::PeerInfo) -> Self {
+        Self {
+            state: value.state.clone().into(),
+            counter: value.counter,
+            timestamp: value.timestamp,
         }
     }
 }

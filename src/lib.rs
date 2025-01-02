@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 
+mod awareness;
 mod container;
 mod convert;
 mod doc;
@@ -18,5 +19,6 @@ fn loro(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     value::register_class(m)?;
     version::register_class(m)?;
     undo::register_class(m)?;
+    awareness::register_class(m)?;
     Ok(())
 }
