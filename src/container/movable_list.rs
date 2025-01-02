@@ -92,7 +92,7 @@ impl LoroMovableList {
     }
 
     /// Push a container to the end of the list.
-    pub fn push_container(&self, py: Python, child: Container) -> PyLoroResult<Container> {
+    pub fn push_container(&self, child: Container) -> PyLoroResult<Container> {
         let container = self.0.push_container(loro::Container::from(child))?;
         Ok(container.into())
     }

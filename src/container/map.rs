@@ -89,15 +89,8 @@ impl LoroMap {
     /// text.insert(0, "0");
     /// assert_eq!(doc.get_deep_value().to_json_value(), json!({"m": {"t": "012"}}));
     /// ```
-    pub fn insert_container(
-        &self,
-        py: Python,
-        key: &str,
-        child: PyObject,
-    ) -> PyLoroResult<Container> {
-        let container = self
-            .0
-            .insert_container(key, loro::Container::from(child.extract::<Container>(py)?))?;
+    pub fn insert_container(&self, key: &str, child: Container) -> PyLoroResult<Container> {
+        let container = self.0.insert_container(key, loro::Container::from(child))?;
         Ok(container.into())
     }
 
@@ -116,15 +109,10 @@ impl LoroMap {
     }
 
     /// Get or create a container with the given key.
-    pub fn get_or_create_container(
-        &self,
-        py: Python,
-        key: &str,
-        child: PyObject,
-    ) -> PyLoroResult<Container> {
+    pub fn get_or_create_container(&self, key: &str, child: Container) -> PyLoroResult<Container> {
         let container = self
             .0
-            .get_or_create_container(key, loro::Container::from(child.extract::<Container>(py)?))?;
+            .get_or_create_container(key, loro::Container::from(child))?;
         Ok(container.into())
     }
 

@@ -23,3 +23,9 @@ if __name__ == "__main__":
     status = doc2.import_(update)
     print(status)
 
+    counter = doc2.get_counter("counter")
+    counter.increment(1)
+    counter.increment(1.2)
+    doc2.commit()
+    print(counter.value)
+

@@ -1,6 +1,6 @@
 use crate::{err::PyLoroResult, value::ID};
 use pyo3::{prelude::*, types::PyType};
-use std::{fmt::Display, sync::RwLock};
+use std::fmt::Display;
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Frontiers>()?;
