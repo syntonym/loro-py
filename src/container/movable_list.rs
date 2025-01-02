@@ -55,14 +55,15 @@ impl LoroMovableList {
     }
 
     /// Get the length of the list.
-    pub fn len(&self) -> usize {
+    pub fn __len__(&self) -> usize {
         self.0.len()
     }
 
     /// Whether the list is empty.
     #[must_use]
+    #[getter]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.__len__() == 0
     }
 
     /// Get the shallow value of the list.

@@ -22,13 +22,9 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Configure>()?;
     m.add_class::<ImportStatus>()?;
     m.add_class::<CommitOptions>()?;
-    m.add_class::<IdSpan>()?;
-    m.add_class::<CounterSpan>()?;
-    m.add_class::<ChangeMeta>()?;
-    m.add_class::<ImportBlobMetadata>()?;
     m.add_class::<EncodedBlobMode>()?;
-    m.add_class::<CounterSpan>()?;
-    m.add_class::<IdSpan>()?;
+    m.add_class::<ExpandType>()?;
+    m.add_class::<StyleConfigMap>()?;
     Ok(())
 }
 
@@ -74,6 +70,7 @@ impl LoroDoc {
 
     /// Get the configurations of the document.
     #[inline]
+    #[getter]
     pub fn config(&self) -> Configure {
         self.doc.config().clone().into()
     }
@@ -146,6 +143,7 @@ impl LoroDoc {
     /// - Importing does not affect the document's state or version; changes are
     ///   recorded in the [OpLog] only. Call `checkout` to apply changes.
     #[inline]
+    #[getter]
     pub fn is_detached_editing_enabled(&self) -> bool {
         self.doc.is_detached_editing_enabled()
     }
@@ -159,18 +157,17 @@ impl LoroDoc {
         self.doc.set_change_merge_interval(interval);
     }
 
-    // TODO:
-    // /// Set the rich text format configuration of the document.
-    // ///
-    // /// You need to config it if you use rich text `mark` method.
-    // /// Specifically, you need to config the `expand` property of each style.
-    // ///
-    // /// Expand is used to specify the behavior of expanding when new text is inserted at the
-    // /// beginning or end of the style.
-    // #[inline]
-    // pub fn config_text_style(&self, text_style: StyleConfigMap) {
-    //     self.doc.config_text_style(text_style)
-    // }
+    /// Set the rich text format configuration of the document.
+    ///
+    /// You need to config it if you use rich text `mark` method.
+    /// Specifically, you need to config the `expand` property of each style.
+    ///
+    /// Expand is used to specify the behavior of expanding when new text is inserted at the
+    /// beginning or end of the style.
+    #[inline]
+    pub fn config_text_style(&self, text_style: StyleConfigMap) {
+        self.doc.config_text_style(text_style.0)
+    }
 
     /// Attach the document state to the latest known version.
     ///
@@ -210,33 +207,32 @@ impl LoroDoc {
         self.doc.checkout_to_latest()
     }
 
-    // TODO:
-
-    // /// Compare the frontiers with the current OpLog's version.
-    // ///
-    // /// If `other` contains any version that's not contained in the current OpLog, return [Ordering::Less].
+    /// Compare the frontiers with the current OpLog's version.
+    ///
+    /// If `other` contains any version that's not contained in the current OpLog, return [Ordering::Less].
     #[inline]
-    pub fn cmp_with_frontiers(&self, other: &Frontiers) -> Ordering {
+    pub fn cmp_with_frontiers(&self, other: Frontiers) -> Ordering {
         self.doc.cmp_with_frontiers(&other.into()).into()
     }
 
-    // /// Compare two frontiers.
-    // ///
-    // /// If the frontiers are not included in the document, return [`FrontiersNotIncluded`].
-    // #[inline]
-    // pub fn cmp_frontiers(
-    //     &self,
-    //     a: &Frontiers,
-    //     b: &Frontiers,
-    // ) -> Result<Option<Ordering>, FrontiersNotIncluded> {
-    //     self.doc.cmp_frontiers(a, b)
-    // }
+    /// Compare two frontiers.
+    ///
+    /// If the frontiers are not included in the document, return [`FrontiersNotIncluded`].
+    #[inline]
+    pub fn cmp_frontiers(&self, a: Frontiers, b: Frontiers) -> PyResult<Option<Ordering>> {
+        let ans = self
+            .doc
+            .cmp_frontiers(&a.into(), &b.into())
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .map(|o| o.into());
+        Ok(ans)
+    }
 
-    // /// Force the document enter the detached mode.
-    // ///
-    // /// In this mode, when you importing new updates, the [loro_internal::DocState] will not be changed.
-    // ///
-    // /// Learn more at https://loro.dev/docs/advanced/doc_state_and_oplog#attacheddetached-status
+    /// Force the document enter the detached mode.
+    ///
+    /// In this mode, when you importing new updates, the [loro_internal::DocState] will not be changed.
+    ///
+    /// Learn more at https://loro.dev/docs/advanced/doc_state_and_oplog#attacheddetached-status
     #[inline]
     pub fn detach(&self) {
         self.doc.detach()
@@ -360,26 +356,24 @@ impl LoroDoc {
         Ok(ImportStatus::from(status))
     }
 
-    // /// Import the json schema updates.
-    // ///
-    // /// only supports backward compatibility but not forward compatibility.
-    // #[inline]
-    // pub fn import_json_updates<T: TryInto<JsonSchema>>(
-    //     &self,
-    //     json: T,
-    // ) -> Result<ImportStatus, LoroError> {
-    //     self.doc.import_json_updates(json)
-    // }
+    /// Import the json schema updates.
+    ///
+    /// only supports backward compatibility but not forward compatibility.
+    #[inline]
+    pub fn import_json_updates(&self, json: String) -> PyLoroResult<ImportStatus> {
+        let status = self.doc.import_json_updates(json)?;
+        Ok(ImportStatus::from(status))
+    }
 
-    // /// Export the current state with json-string format of the document.
-    // #[inline]
-    // pub fn export_json_updates(
-    //     &self,
-    //     start_vv: &VersionVector,
-    //     end_vv: &VersionVector,
-    // ) -> JsonSchema {
-    //     self.doc.export_json_updates(start_vv, end_vv)
-    // }
+    // TODO: return an object
+    /// Export the current state with json-string format of the document.
+    #[inline]
+    pub fn export_json_updates(&self, start_vv: VersionVector, end_vv: VersionVector) -> String {
+        let json = self
+            .doc
+            .export_json_updates(&start_vv.into(), &end_vv.into());
+        serde_json::to_string(&json).unwrap()
+    }
 
     // /// Export all the ops not included in the given `VersionVector`
     // #[deprecated(
@@ -440,12 +434,14 @@ impl LoroDoc {
 
     /// Get the `VersionVector` version of `OpLog`
     #[inline]
+    #[getter]
     pub fn oplog_vv(&self) -> VersionVector {
         self.doc.oplog_vv().into()
     }
 
     /// Get the `VersionVector` version of `DocState`
     #[inline]
+    #[getter]
     pub fn state_vv(&self) -> VersionVector {
         self.doc.state_vv().into()
     }
@@ -456,6 +452,7 @@ impl LoroDoc {
     ///
     /// The ops included by the shallow history start version vector are not in the doc.
     #[inline]
+    #[getter]
     pub fn shallow_since_vv(&self) -> VersionVector {
         loro::VersionVector::from_im_vv(&self.doc.shallow_since_vv()).into()
     }
@@ -466,18 +463,21 @@ impl LoroDoc {
     ///
     /// The ops included by the shallow history start frontiers are not in the doc.
     #[inline]
+    #[getter]
     pub fn shallow_since_frontiers(&self) -> Frontiers {
         self.doc.shallow_since_frontiers().into()
     }
 
     /// Get the total number of operations in the `OpLog`
     #[inline]
+    #[getter]
     pub fn len_ops(&self) -> usize {
         self.doc.len_ops()
     }
 
     /// Get the total number of changes in the `OpLog`
     #[inline]
+    #[getter]
     pub fn len_changes(&self) -> usize {
         self.doc.len_changes()
     }
@@ -495,6 +495,7 @@ impl LoroDoc {
     }
 
     /// Get the entire state of the current DocState with container id
+    #[inline]
     pub fn get_deep_value_with_id(&self) -> LoroValue {
         self.doc.get_deep_value_with_id().into()
     }
@@ -528,6 +529,7 @@ impl LoroDoc {
     /// If it happens, the document will be corrupted.
     #[setter]
     #[inline]
+    #[pyo3(name = "peer_id")]
     pub fn set_peer_id(&self, peer: PeerID) -> PyLoroResult<()> {
         self.doc.set_peer_id(peer)?;
         Ok(())
@@ -601,7 +603,6 @@ impl LoroDoc {
     /// - `doc.export(mode)` is called.
     /// - `doc.import(data)` is called.
     /// - `doc.checkout(version)` is called.
-    // TODO: how we deal with the return value of the callback?
     #[inline]
     pub fn subscribe_root(&self, callback: PyObject) -> Subscription {
         let subscription = self.doc.subscribe_root(Arc::new(move |e| {
@@ -693,6 +694,7 @@ impl LoroDoc {
 
     /// Whether the history cache is built.
     #[inline]
+    #[getter]
     pub fn has_history_cache(&self) -> bool {
         self.doc.has_history_cache()
     }
@@ -721,8 +723,8 @@ impl LoroDoc {
     }
 
     /// Export the document in the given mode.
-    pub fn export(&self, py: Python, mode: PyObject) -> PyLoroResult<Vec<u8>> {
-        let ans = self.doc.export(mode.extract::<ExportMode>(py)?.into())?;
+    pub fn export(&self, mode: ExportMode) -> PyLoroResult<Vec<u8>> {
+        let ans = self.doc.export(mode.into())?;
         Ok(ans)
     }
 
@@ -995,8 +997,7 @@ impl<'py> FromPyObject<'py> for ExportMode {
 
 /// This struct supports reverse repr: [CounterSpan]'s from can be less than to. But we should use it conservatively.
 /// We need this because it'll make merging deletions easier.
-#[pyclass(get_all, set_all, eq)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, FromPyObject)]
 pub struct IdSpan {
     pub peer: PeerID,
     pub counter: CounterSpan,
@@ -1007,15 +1008,13 @@ pub struct IdSpan {
 ///
 /// But we should use it behavior conservatively.
 /// If it is not necessary to be reverse, it should not.
-#[pyclass(get_all, set_all, eq)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, FromPyObject, IntoPyObject)]
 pub struct CounterSpan {
     pub start: Counter,
     pub end: Counter,
 }
 
-#[pyclass(get_all, set_all)]
-#[derive(Clone)]
+#[derive(Clone, IntoPyObject)]
 pub struct ChangeMeta {
     /// Lamport timestamp of the Change
     pub lamport: Lamport,
@@ -1032,8 +1031,7 @@ pub struct ChangeMeta {
     pub len: usize,
 }
 
-#[pyclass(get_all, set_all)]
-#[derive(Clone)]
+#[derive(Clone, IntoPyObject)]
 pub struct ImportBlobMetadata {
     /// The partial start version vector.
     ///
@@ -1062,4 +1060,59 @@ pub enum EncodedBlobMode {
     ShallowSnapshot,
     OutdatedRle,
     Updates,
+}
+
+#[pyclass(str)]
+#[derive(Debug, Clone, Default)]
+pub struct StyleConfigMap(loro::StyleConfigMap);
+
+#[pymethods]
+impl StyleConfigMap {
+    #[new]
+    pub fn new() -> Self {
+        Self(loro::StyleConfigMap::new())
+    }
+
+    pub fn insert(&mut self, key: String, value: ExpandType) {
+        if key.contains(':') {
+            panic!("style key should not contain ':'");
+        }
+
+        self.0.insert(
+            key.into(),
+            loro::StyleConfig {
+                expand: value.into(),
+            },
+        );
+    }
+
+    pub fn get(&self, key: &str) -> Option<ExpandType> {
+        self.0.get(&key.into()).map(|x| x.expand.into())
+    }
+
+    #[classmethod]
+    pub fn default_rich_text_config(_cls: &Bound<'_, PyType>) -> Self {
+        Self(loro::StyleConfigMap::default_rich_text_config())
+    }
+}
+
+impl Display for StyleConfigMap {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+/// Whether to expand the style when inserting new text around it.
+///
+/// - Before: when inserting new text before this style, the new text should inherit this style.
+/// - After: when inserting new text after this style, the new text should inherit this style.
+/// - Both: when inserting new text before or after this style, the new text should inherit this style.
+/// - None: when inserting new text before or after this style, the new text should **not** inherit this style.
+#[pyclass(eq, eq_int)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
+pub enum ExpandType {
+    Before,
+    After,
+    Both,
+    None,
 }

@@ -1,4 +1,4 @@
-from loro import LoroDoc, LoroList, ContainerType
+from loro import LoroDoc, LoroList
 
 def test_map():
     doc = LoroDoc()
@@ -7,4 +7,6 @@ def test_map():
     list = map.insert_container("key2", LoroList())
     list.insert(0, "value2")
     doc.commit()
-    print(doc.get_value())
+    assert doc.get_deep_value() == {
+        "map": {"key": "value", "key2": ["value2"]},
+    }

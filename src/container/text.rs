@@ -35,11 +35,13 @@ impl LoroText {
     ///
     /// The edits on a detached container will not be persisted.
     /// To attach the container to the document, please insert it into an attached container.
+    #[getter]
     pub fn is_attached(&self) -> bool {
         self.0.is_attached()
     }
 
     /// Get the [ContainerID]  of the text container.
+    #[getter]
     pub fn id(&self) -> ContainerID {
         self.0.id().into()
     }
@@ -98,21 +100,25 @@ impl LoroText {
     }
 
     /// Whether the text container is empty.
+    #[getter]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
     /// Get the length of the text container in UTF-8.
+    #[getter]
     pub fn len_utf8(&self) -> usize {
         self.0.len_utf8()
     }
 
     /// Get the length of the text container in Unicode.
+    #[getter]
     pub fn len_unicode(&self) -> usize {
         self.0.len_unicode()
     }
 
     /// Get the length of the text container in UTF-16.
+    #[getter]
     pub fn len_utf16(&self) -> usize {
         self.0.len_utf16()
     }
@@ -174,9 +180,8 @@ impl LoroText {
     /// *You should make sure that a key is always associated with the same expand type.*
     ///
     /// Note: this is not suitable for unmergeable annotations like comments.
-    // TODO: use slice as range
-    pub fn mark(&self, range: [usize; 2], key: &str, value: LoroValue) -> PyLoroResult<()> {
-        self.0.mark(range[0]..range[1], key, value)?;
+    pub fn mark(&self, start: usize, end: usize, key: &str, value: LoroValue) -> PyLoroResult<()> {
+        self.0.mark(start..end, key, value)?;
         Ok(())
     }
 
@@ -196,8 +201,8 @@ impl LoroText {
     /// *You should make sure that a key is always associated with the same expand type.*
     ///
     /// Note: you cannot delete unmergeable annotations like comments by this method.
-    pub fn unmark(&self, range: [usize; 2], key: &str) -> PyLoroResult<()> {
-        self.0.unmark(range[0]..range[1], key)?;
+    pub fn unmark(&self, start: usize, end: usize, key: &str) -> PyLoroResult<()> {
+        self.0.unmark(start..end, key)?;
         Ok(())
     }
 

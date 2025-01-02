@@ -56,6 +56,7 @@ impl LoroTree {
     }
 
     /// Get the root nodes of the forest.
+    #[getter]
     pub fn roots(&self) -> Vec<TreeID> {
         self.0.roots().into_iter().map(|x| x.into()).collect()
     }
@@ -229,7 +230,7 @@ impl LoroTree {
         Ok(ans)
     }
 
-    /// Return all nodes, including deleted nodes
+    /// Return all node ids, including deleted nodes
     pub fn nodes(&self) -> Vec<TreeID> {
         self.0.nodes().into_iter().map(|x| x.into()).collect()
     }
@@ -258,6 +259,7 @@ impl LoroTree {
     }
 
     /// Return container id of the tree.
+    #[getter]
     pub fn id(&self) -> ContainerID {
         self.0.id().into()
     }

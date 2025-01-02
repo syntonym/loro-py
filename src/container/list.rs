@@ -27,6 +27,7 @@ impl LoroList {
     ///
     /// The edits on a detached container will not be persisted.
     /// To attach the container to the document, please insert it into an attached container.
+    #[getter]
     pub fn is_attached(&self) -> bool {
         self.0.is_attached()
     }
@@ -103,7 +104,7 @@ impl LoroList {
 
     /// Get the length of the list.
     #[inline]
-    pub fn len(&self) -> usize {
+    pub fn __len__(&self) -> usize {
         self.0.len()
     }
 

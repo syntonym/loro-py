@@ -19,3 +19,4 @@ loro-internal = { git = "https://github.com/loro-dev/loro.git", tag = "loro-crdt
 ] }
 fxhash = "0.2.1"
 pyo3 = { version = "0.23.3", features = ["extension-module"] }
+serde_json = "1"

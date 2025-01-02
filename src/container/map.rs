@@ -29,6 +29,7 @@ impl LoroMap {
     }
 
     /// Whether the container is attached to a document.
+    #[getter]
     pub fn is_attached(&self) -> bool {
         self.0.is_attached()
     }
@@ -54,16 +55,18 @@ impl LoroMap {
     }
 
     /// Get the length of the map.
-    pub fn len(&self) -> usize {
+    pub fn __len__(&self) -> usize {
         self.0.len()
     }
 
     /// Get the ID of the map.
+    #[getter]
     pub fn id(&self) -> ContainerID {
         self.0.id().clone().into()
     }
 
     /// Whether the map is empty.
+    #[getter]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

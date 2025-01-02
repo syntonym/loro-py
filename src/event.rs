@@ -6,14 +6,8 @@ use std::fmt;
 use std::sync::Mutex;
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<DiffEvent>()?;
     m.add_class::<Subscription>()?;
     m.add_class::<EventTriggerKind>()?;
-    m.add_class::<Index>()?;
-    m.add_class::<PathItem>()?;
-    m.add_class::<ContainerDiff>()?;
-    m.add_class::<Diff>()?;
-    m.add_class::<TextDelta>()?;
     m.add_class::<ListDiffItem>()?;
     m.add_class::<MapDelta>()?;
     m.add_class::<TreeDiff>()?;
@@ -22,8 +16,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-#[pyclass(str, get_all)]
-#[derive(Debug)]
+#[derive(Debug, IntoPyObject)]
 pub struct DiffEvent {
     /// How the event is triggered.
     pub triggered_by: EventTriggerKind,
@@ -76,8 +69,7 @@ impl fmt::Display for EventTriggerKind {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, IntoPyObject)]
 pub struct PathItem {
     pub container: ContainerID,
     pub index: Index,
@@ -93,8 +85,7 @@ impl fmt::Display for PathItem {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, IntoPyObject)]
 /// A diff of a container.
 pub struct ContainerDiff {
     /// The target container id of the diff.
@@ -124,26 +115,24 @@ impl fmt::Display for ContainerDiff {
     }
 }
 
-#[pyclass(str)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, IntoPyObject, FromPyObject)]
 pub enum Index {
-    Key { key: String },
-    Seq { index: u32 },
-    Node { target: TreeID },
+    Key(String),
+    Seq(u32),
+    Node(TreeID),
 }
 
 impl fmt::Display for Index {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Index::Key { key } => write!(f, "Key(key='{}')", key),
-            Index::Seq { index } => write!(f, "Seq(index={})", index),
-            Index::Node { target } => write!(f, "Node(target={})", target),
+            Index::Key(key) => write!(f, "Key(key='{}')", key),
+            Index::Seq(index) => write!(f, "Seq(index={})", index),
+            Index::Node(target) => write!(f, "Node(target={})", target),
         }
     }
 }
 
-#[pyclass]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, IntoPyObject)]
 pub enum Diff {
     /// A list diff.
     List(Vec<ListDiffItem>),
@@ -156,7 +145,7 @@ pub enum Diff {
     /// A counter diff.
     Counter(f64),
     /// An unknown diff.
-    Unknown {},
+    Unknown(()),
 }
 
 impl fmt::Display for Diff {
@@ -181,13 +170,12 @@ impl fmt::Display for Diff {
             Diff::Map(diff) => write!(f, "Map({})", diff),
             Diff::Tree(diff) => write!(f, "Tree({})", diff),
             Diff::Counter(diff) => write!(f, "Counter({})", diff),
-            Diff::Unknown {} => write!(f, "Unknown()"),
+            Diff::Unknown(()) => write!(f, "Unknown()"),
         }
     }
 }
 
-#[pyclass(str, get_all, set_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, IntoPyObject, FromPyObject)]
 pub enum TextDelta {
     Retain {
         retain: usize,

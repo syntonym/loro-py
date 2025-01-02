@@ -416,6 +416,7 @@ dependencies = [
  "loro 1.1.0",
  "loro-internal",
  "pyo3",
+ "serde_json",
 ]
 
 [[package]]
