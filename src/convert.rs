@@ -15,7 +15,7 @@ use pyo3::{
 use crate::{
     container::{
         Container, Cursor, LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree,
-        LoroUnknown, Side, UpdateOptions,
+        LoroUnknown, Side, TreeNode, UpdateOptions,
     },
     doc::{
         AbsolutePosition, ChangeMeta, CounterSpan, EncodedBlobMode, ExportMode, IdSpan,
@@ -317,7 +317,7 @@ impl From<loro::TreeID> for TreeID {
 impl From<TreeParentId> for loro::TreeParentId {
     fn from(value: TreeParentId) -> Self {
         match value {
-            TreeParentId::Node { id } => loro::TreeParentId::Node(id.into()),
+            TreeParentId::Node(id) => loro::TreeParentId::Node(id.into()),
             TreeParentId::Root {} => loro::TreeParentId::Root,
             TreeParentId::Deleted {} => loro::TreeParentId::Deleted,
             TreeParentId::Unexist {} => loro::TreeParentId::Unexist,
@@ -328,7 +328,7 @@ impl From<TreeParentId> for loro::TreeParentId {
 impl From<loro::TreeParentId> for TreeParentId {
     fn from(value: loro::TreeParentId) -> Self {
         match value {
-            loro::TreeParentId::Node(id) => TreeParentId::Node { id: id.into() },
+            loro::TreeParentId::Node(id) => TreeParentId::Node(id.into()),
             loro::TreeParentId::Root => TreeParentId::Root {},
             loro::TreeParentId::Deleted => TreeParentId::Deleted {},
             loro::TreeParentId::Unexist => TreeParentId::Unexist {},
@@ -713,6 +713,17 @@ impl From<loro::ImportBlobMetadata> for ImportBlobMetadata {
                 }
                 loro_internal::encoding::EncodedBlobMode::Updates => EncodedBlobMode::Updates,
             },
+        }
+    }
+}
+
+impl From<loro::TreeNode> for TreeNode {
+    fn from(node: loro::TreeNode) -> Self {
+        Self {
+            id: node.id.into(),
+            parent: node.parent.into(),
+            fractional_index: node.fractional_index.to_string(),
+            index: node.index,
         }
     }
 }

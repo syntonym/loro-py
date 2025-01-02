@@ -12,7 +12,6 @@ use crate::{
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LoroText>()?;
     m.add_class::<UpdateOptions>()?;
-    m.add_class::<TextDelta>()?;
     m.add_class::<Cursor>()?;
     m.add_class::<Side>()?;
     Ok(())

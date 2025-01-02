@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use fxhash::FxHashMap;
 use loro::{Counter, PeerID};
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyNone, BoundObject};
 
 use crate::container::Container;
 
@@ -18,7 +18,6 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LoroMapValue>()?;
     m.add_class::<Ordering>()?;
     m.add_class::<TreeID>()?;
-    m.add_class::<TreeParentId>()?;
     Ok(())
 }
 
@@ -152,18 +151,42 @@ impl Display for TreeID {
     }
 }
 
-#[pyclass(eq, str)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TreeParentId {
-    Node { id: TreeID },
-    Root {},
-    Deleted {},
-    Unexist {},
+    Node(TreeID),
+    Root,
+    Deleted,
+    Unexist,
 }
 
-impl Display for TreeParentId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+impl<'py> FromPyObject<'py> for TreeParentId {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        if ob.is_instance_of::<TreeID>() {
+            Ok(TreeParentId::Node(ob.extract::<TreeID>()?))
+        } else if ob.is_none() {
+            Ok(TreeParentId::Root)
+        } else {
+            Err(PyValueError::new_err("Invalid tree parent id"))
+        }
+    }
+}
+
+impl<'py> IntoPyObject<'py> for TreeParentId {
+    type Target = PyAny;
+
+    type Output = Bound<'py, PyAny>;
+
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        let ans = match self {
+            TreeParentId::Node(id) => id.into_pyobject(py)?.into_any().into_bound(),
+            TreeParentId::Root => py.None().into_pyobject(py)?.into_any().into_bound(),
+            TreeParentId::Deleted | TreeParentId::Unexist => {
+                return Err(PyValueError::new_err("Invalid tree parent id"))
+            }
+        };
+        Ok(ans)
     }
 }
 

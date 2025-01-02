@@ -11,8 +11,8 @@ pub use counter::LoroCounter;
 pub use list::LoroList;
 pub use map::LoroMap;
 pub use movable_list::LoroMovableList;
-pub use text::*;
-pub use tree::LoroTree;
+pub use text::{Cursor, LoroText, Side, UpdateOptions};
+pub use tree::{LoroTree, TreeNode};
 pub use unknown::LoroUnknown;
 
 #[derive(Debug, Clone, FromPyObject, IntoPyObject)]

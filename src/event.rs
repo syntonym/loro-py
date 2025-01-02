@@ -382,7 +382,7 @@ impl fmt::Display for TreeExternalDiff {
             } => {
                 write!(
                     f,
-                    "Create(parent={}, index={}, fractional_index='{}')",
+                    "Create(parent={:?}, index={}, fractional_index='{}')",
                     parent, index, fractional_index
                 )
             }
@@ -395,7 +395,7 @@ impl fmt::Display for TreeExternalDiff {
             } => {
                 write!(
                     f,
-                    "Move(parent={}, index={}, fractional_index='{}', old_parent={}, old_index={})",
+                    "Move(parent={:?}, index={}, fractional_index='{}', old_parent={:?}, old_index={})",
                     parent, index, fractional_index, old_parent, old_index
                 )
             }
@@ -405,7 +405,7 @@ impl fmt::Display for TreeExternalDiff {
             } => {
                 write!(
                     f,
-                    "Delete(old_parent={}, old_index={})",
+                    "Delete(old_parent={:?}, old_index={})",
                     old_parent, old_index
                 )
             }
