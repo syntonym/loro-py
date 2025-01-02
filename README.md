@@ -12,12 +12,13 @@
   </a>
 </p>
 
-Python bindings for [Loro CRDT](https://github.com/loro-dev/loro) library, powered by [PyO3](https://github.com/PyO3/pyo3).
+Python bindings for [Loro CRDT](https://github.com/loro-dev/loro). If you have any issues or suggestions, please feel free to create an issue or join
+our [Discord](https://discord.gg/tUsBSVfqzf) community.
 
 ## Features
 
 -   High-performance CRDT operations with Rust implementation
--   Rich data types support: Text, List, Map, Tree, Movable List, Counter (WIP)
+-   Rich data types support: Text, List, Map, Tree, Movable List, Counter
 -   Python-friendly API design (WIP)
 
 ## Installation
@@ -65,7 +66,3 @@ cd loro-py
 pip install maturin
 maturin develop
 ```
-
-## Credits
-
--   [PyO3](https://github.com/PyO3/pyo3) - Rust bindings for Python

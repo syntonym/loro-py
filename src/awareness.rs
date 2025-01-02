@@ -33,10 +33,14 @@ impl Awareness {
         AwarenessPeerUpdate { updated, added }
     }
 
+    #[setter]
+    #[pyo3(name = "local_state")]
     pub fn set_local_state(&mut self, value: LoroValue) {
         self.0.set_local_state(value);
     }
 
+    #[getter]
+    #[pyo3(name = "local_state")]
     pub fn get_local_state(&self) -> Option<LoroValue> {
         self.0.get_local_state().map(|x| x.into())
     }
@@ -45,6 +49,8 @@ impl Awareness {
         self.0.remove_outdated()
     }
 
+    #[getter]
+    #[pyo3(name = "all_states")]
     pub fn get_all_states(&self) -> HashMap<PeerID, PeerInfo> {
         self.0
             .get_all_states()
