@@ -500,6 +500,7 @@ impl LoroDoc {
     }
 
     /// Get the `Frontiers` version of `OpLog`
+    #[getter]
     #[inline]
     pub fn oplog_frontiers(&self) -> Frontiers {
         self.doc.oplog_frontiers().into()
@@ -508,6 +509,7 @@ impl LoroDoc {
     /// Get the `Frontiers` version of `DocState`
     ///
     /// Learn more about [`Frontiers`](https://loro.dev/docs/advanced/version_deep_dive)
+    #[getter]
     #[inline]
     pub fn state_frontiers(&self) -> Frontiers {
         self.doc.state_frontiers().into()
@@ -524,6 +526,7 @@ impl LoroDoc {
     ///
     /// NOTE: You need to make sure there is no chance two peer have the same PeerID.
     /// If it happens, the document will be corrupted.
+    #[setter]
     #[inline]
     pub fn set_peer_id(&self, peer: PeerID) -> PyLoroResult<()> {
         self.doc.set_peer_id(peer)?;
@@ -575,7 +578,7 @@ impl LoroDoc {
     /// sub.unsubscribe();
     /// ```
     #[inline]
-    pub fn subscribe(&self, container_id: &ContainerID, callback: Py<PyAny>) -> Subscription {
+    pub fn subscribe(&self, container_id: &ContainerID, callback: PyObject) -> Subscription {
         let subscription = self.doc.subscribe(
             &container_id.into(),
             Arc::new(move |e| {

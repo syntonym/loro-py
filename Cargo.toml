@@ -1,5 +1,5 @@
 [package]
-name = "loro_py"
+name = "loro"
 version = "1.2.5-alpha.0"
 edition = "2021"
 

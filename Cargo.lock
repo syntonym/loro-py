@@ -409,6 +409,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "loro"
+version = "1.2.5-alpha.0"
+dependencies = [
+ "fxhash",
+ "loro 1.1.0",
+ "loro-internal",
+ "pyo3",
+]
+
+[[package]]
 name = "loro-common"
 version = "1.1.0"
 source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
@@ -516,16 +526,6 @@ dependencies = [
  "once_cell",
  "rand",
  "serde",
-]
-
-[[package]]
-name = "loro_py"
-version = "1.2.5-alpha.0"
-dependencies = [
- "fxhash",
- "loro",
- "loro-internal",
- "pyo3",
 ]
 
 [[package]]
