@@ -10,7 +10,7 @@ mod undo;
 mod value;
 mod version;
 
-/// A Python module implemented in Rust.
+/// Python bindings for Loro
 #[pymodule]
 fn loro(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     doc::register_class(m)?;
