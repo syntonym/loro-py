@@ -1,4 +1,4 @@
-use loro::{LoroError, LoroTree as LoroTreeInner, LoroTreeError};
+use loro::LoroTree as LoroTreeInner;
 use pyo3::prelude::*;
 
 use crate::{
@@ -202,7 +202,7 @@ impl LoroTree {
     /// root_meta.insert("color", "red");
     /// ```
     pub fn get_meta(&self, target: TreeID) -> PyLoroResult<LoroMap> {
-        let ans = self.0.get_meta(target.into()).map(|h| LoroMap(h))?;
+        let ans = self.0.get_meta(target.into()).map(LoroMap)?;
         Ok(ans)
     }
 

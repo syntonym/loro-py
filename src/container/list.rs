@@ -87,10 +87,8 @@ impl LoroList {
 
     /// Push a container to the list.
     #[inline]
-    pub fn push_container(&self, py: Python, child: PyObject) -> PyLoroResult<Container> {
-        let container = self
-            .0
-            .push_container(loro::Container::from(child.extract::<Container>(py)?))?;
+    pub fn push_container(&self, child: Container) -> PyLoroResult<Container> {
+        let container = self.0.push_container(loro::Container::from(child))?;
         Ok(container.into())
     }
 

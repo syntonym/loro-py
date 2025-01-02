@@ -1,15 +1,11 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::{borrow::Cow, collections::HashMap, sync::Mutex};
 
 use fxhash::FxHashMap;
 use pyo3::{
     exceptions::PyTypeError,
     prelude::*,
-    types::{PyBytes, PyDict, PyList, PyMapping, PyString},
-    PyObject, PyResult, Python,
+    types::{PyBool, PyBytes, PyDict, PyList, PyMapping, PyString},
+    BoundObject, PyResult,
 };
 
 use crate::{
@@ -25,10 +21,7 @@ use crate::{
         ContainerDiff, Diff, DiffEvent, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
         Subscription, TextDelta, TreeDiff, TreeDiffItem, TreeExternalDiff,
     },
-    value::{
-        ContainerID, ContainerType, LoroBinaryValue, LoroListValue, LoroMapValue, LoroStringValue,
-        LoroValue, TreeID, TreeParentId, ValueOrContainer, ID,
-    },
+    value::{ContainerID, ContainerType, LoroValue, TreeID, TreeParentId, ValueOrContainer, ID},
 };
 
 impl From<ID> for loro::ID {
@@ -48,106 +41,57 @@ impl From<loro::ID> for ID {
         }
     }
 }
-impl From<&LoroValue> for loro::LoroValue {
-    fn from(value: &LoroValue) -> Self {
-        match value {
-            LoroValue::Null {} => loro::LoroValue::Null,
-            LoroValue::Bool(b) => loro::LoroValue::Bool(*b),
-            LoroValue::Double(d) => loro::LoroValue::Double(*d),
-            LoroValue::I64(i) => loro::LoroValue::I64(*i),
-            LoroValue::Binary(b) => {
-                loro::LoroValue::Binary(loro::LoroBinaryValue::from((*b.0).clone()))
-            }
-            LoroValue::String(s) => {
-                loro::LoroValue::String(loro::LoroStringValue::from((*s.0).clone()))
-            }
-            LoroValue::List(l) => loro::LoroValue::List(loro::LoroListValue::from(
-                (*l.0)
-                    .clone()
-                    .into_iter()
-                    .map(|v| (&v).into())
-                    .collect::<Vec<_>>(),
-            )),
-            LoroValue::Map(m) => loro::LoroValue::Map(loro::LoroMapValue::from(
-                (*m.0)
-                    .clone()
-                    .into_iter()
-                    .map(|(k, v)| (k, (&v).into()))
-                    .collect::<Vec<_>>(),
-            )),
-            LoroValue::Container(c) => loro::LoroValue::Container(c.into()),
-        }
-    }
-}
-
-impl From<loro::LoroValue> for LoroValue {
-    fn from(value: loro::LoroValue) -> Self {
-        match value {
-            loro::LoroValue::Null => LoroValue::Null {},
-            loro::LoroValue::Bool(b) => LoroValue::Bool(b),
-            loro::LoroValue::Double(d) => LoroValue::Double(d),
-            loro::LoroValue::I64(i) => LoroValue::I64(i),
-            loro::LoroValue::Binary(b) => LoroValue::Binary(LoroBinaryValue(Arc::new(b.to_vec()))),
-            loro::LoroValue::String(s) => {
-                LoroValue::String(LoroStringValue(Arc::new(s.to_string())))
-            }
-            loro::LoroValue::List(l) => LoroValue::List(LoroListValue(Arc::new(
-                l.iter().map(|v| v.clone().into()).collect::<Vec<_>>(),
-            ))),
-            loro::LoroValue::Map(m) => LoroValue::Map(LoroMapValue(Arc::new(
-                m.iter()
-                    .map(|(k, v)| (k.to_string(), v.clone().into()))
-                    .collect::<FxHashMap<_, _>>(),
-            ))),
-            loro::LoroValue::Container(c) => LoroValue::Container(ContainerID::from(c)),
-        }
-    }
-}
 
 pub fn pyobject_to_container_id(
-    py: Python<'_>,
-    obj: PyObject,
+    obj: &Bound<'_, PyAny>,
     ty: ContainerType,
 ) -> PyResult<loro::ContainerID> {
-    if let Ok(value) = obj.downcast_bound::<PyString>(py) {
+    if let Ok(value) = obj.downcast::<PyString>() {
         return Ok(loro::ContainerID::new_root(value.to_str()?, ty.into()));
     }
-    if let Ok(value) = obj.downcast_bound::<ContainerID>(py) {
+    if let Ok(value) = obj.downcast::<ContainerID>() {
         return Ok(loro::ContainerID::from(value.get()));
     }
 
     Err(PyTypeError::new_err("Invalid ContainerID"))
 }
 
-pub fn pyobject_to_loro_value(py: Python<'_>, obj: PyObject) -> PyResult<loro::LoroValue> {
-    if obj.is_none(py) {
+pub fn pyobject_to_loro_value(obj: &Bound<'_, PyAny>) -> PyResult<loro::LoroValue> {
+    if obj.is_none() {
         return Ok(loro::LoroValue::Null);
     }
-    if let Ok(value) = obj.downcast_bound::<LoroValue>(py) {
-        return Ok(value.get().into());
+
+    if let Ok(value) = obj.extract::<bool>() {
+        return Ok(loro::LoroValue::Bool(value));
     }
-    if let Ok(value) = obj.downcast_bound::<PyBytes>(py) {
+    if let Ok(value) = obj.extract::<i64>() {
+        return Ok(loro::LoroValue::I64(value));
+    }
+    if let Ok(value) = obj.extract::<f64>() {
+        return Ok(loro::LoroValue::Double(value));
+    }
+    if let Ok(value) = obj.downcast::<PyBytes>() {
         return Ok(loro::LoroValue::Binary(loro::LoroBinaryValue::from(
             value.as_bytes().to_vec(),
         )));
     }
-    if let Ok(value) = obj.downcast_bound::<PyString>(py) {
+    if let Ok(value) = obj.downcast::<PyString>() {
         return Ok(loro::LoroValue::String(loro::LoroStringValue::from(
             value.to_string(),
         )));
     }
-    if let Ok(value) = obj.downcast_bound::<PyList>(py) {
+    if let Ok(value) = obj.downcast::<PyList>() {
         let mut list = Vec::with_capacity(value.len());
         for item in value.iter() {
-            list.push(pyobject_to_loro_value(py, item.unbind())?);
+            list.push(pyobject_to_loro_value(&item)?);
         }
         return Ok(loro::LoroValue::List(loro::LoroListValue::from(list)));
     }
-    if let Ok(value) = obj.downcast_bound::<PyDict>(py) {
+    if let Ok(value) = obj.downcast::<PyDict>() {
         let mut map = FxHashMap::default();
         for (key, value) in value.iter() {
             if key.downcast::<PyString>().is_ok() {
-                map.insert(key.to_string(), pyobject_to_loro_value(py, value.unbind())?);
+                map.insert(key.to_string(), pyobject_to_loro_value(&value)?);
             } else {
                 return Err(PyTypeError::new_err(
                     "only dict with string keys is supported for converting to LoroValue",
@@ -156,13 +100,13 @@ pub fn pyobject_to_loro_value(py: Python<'_>, obj: PyObject) -> PyResult<loro::L
         }
         return Ok(loro::LoroValue::Map(loro::LoroMapValue::from(map)));
     }
-    if let Ok(value) = obj.downcast_bound::<PyMapping>(py) {
+    if let Ok(value) = obj.downcast::<PyMapping>() {
         let mut map = FxHashMap::default();
         for key in value.keys()? {
             if key.downcast::<PyString>().is_ok() {
                 map.insert(
                     key.to_string(),
-                    pyobject_to_loro_value(py, value.get_item(key).unwrap().unbind())?,
+                    pyobject_to_loro_value(&value.get_item(key).unwrap())?,
                 );
             } else {
                 return Err(PyTypeError::new_err(
@@ -172,10 +116,42 @@ pub fn pyobject_to_loro_value(py: Python<'_>, obj: PyObject) -> PyResult<loro::L
         }
         return Ok(loro::LoroValue::Map(loro::LoroMapValue::from(map)));
     }
-    if let Ok(value) = obj.downcast_bound::<ContainerID>(py) {
+    if let Ok(value) = obj.downcast::<ContainerID>() {
         return Ok(loro::LoroValue::Container(value.get().clone().into()));
     }
     Err(PyTypeError::new_err("Invalid LoroValue"))
+}
+
+pub fn loro_value_to_pyobject(py: Python, value: LoroValue) -> PyResult<Bound<'_, PyAny>> {
+    match value.0 {
+        loro::LoroValue::Null => Ok(py.None().into_pyobject(py)?.into_any().into_bound()),
+        loro::LoroValue::Bool(b) => Ok(PyBool::new(py, b)
+            .into_pyobject(py)?
+            .into_any()
+            .into_bound()),
+        loro::LoroValue::Double(f) => Ok(f.into_pyobject(py)?.into_any().into_bound()),
+        loro::LoroValue::I64(i) => Ok(i.into_pyobject(py)?.into_any().into_bound()),
+        loro::LoroValue::String(s) => Ok(s.to_string().into_pyobject(py)?.into_any().into_bound()),
+        loro::LoroValue::Binary(b) => Ok(b.as_slice().into_pyobject(py)?.into_any().into_bound()),
+        loro::LoroValue::List(l) => {
+            let list = l
+                .iter()
+                .map(|v| LoroValue(v.clone()).into_pyobject(py))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(list.into_pyobject(py)?.into_any().into_bound())
+        }
+        loro::LoroValue::Map(m) => {
+            let dict = m
+                .iter()
+                .map(|(k, v)| Ok((k, LoroValue(v.clone()).into_pyobject(py)?)))
+                .collect::<Result<FxHashMap<_, _>, PyErr>>()?;
+            Ok(dict.into_pyobject(py)?.into_any().into_bound())
+        }
+        loro::LoroValue::Container(c) => Ok(ContainerID::from(&c)
+            .into_pyobject(py)?
+            .into_any()
+            .into_bound()),
+    }
 }
 
 impl From<ContainerType> for loro::ContainerType {

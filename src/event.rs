@@ -213,7 +213,7 @@ impl fmt::Display for TextDelta {
                     attributes.as_ref().map_or("None".to_string(), |a| format!(
                         "{{{}}}",
                         a.iter()
-                            .map(|(k, v)| format!("'{}': {}", k, v))
+                            .map(|(k, v)| format!("'{}': {:?}", k, v))
                             .collect::<Vec<_>>()
                             .join(", ")
                     ))
@@ -227,7 +227,7 @@ impl fmt::Display for TextDelta {
                     attributes.as_ref().map_or("None".to_string(), |a| format!(
                         "{{{}}}",
                         a.iter()
-                            .map(|(k, v)| format!("'{}': {}", k, v))
+                            .map(|(k, v)| format!("'{}': {:?}", k, v))
                             .collect::<Vec<_>>()
                             .join(", ")
                     ))

@@ -3,7 +3,6 @@ use pyo3::{exceptions::PyValueError, prelude::*};
 use std::fmt::Display;
 
 use crate::{
-    convert::pyobject_to_loro_value,
     err::PyLoroResult,
     event::TextDelta,
     value::{ContainerID, LoroValue, ID},
@@ -176,15 +175,8 @@ impl LoroText {
     ///
     /// Note: this is not suitable for unmergeable annotations like comments.
     // TODO: use slice as range
-    pub fn mark(
-        &self,
-        py: Python<'_>,
-        range: [usize; 2],
-        key: &str,
-        value: PyObject,
-    ) -> PyLoroResult<()> {
-        self.0
-            .mark(range[0]..range[1], key, pyobject_to_loro_value(py, value)?)?;
+    pub fn mark(&self, range: [usize; 2], key: &str, value: LoroValue) -> PyLoroResult<()> {
+        self.0.mark(range[0]..range[1], key, value)?;
         Ok(())
     }
 

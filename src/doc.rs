@@ -256,8 +256,8 @@ impl LoroDoc {
     ///
     /// If the provided id is string, it will be converted into a root container id with the name of the string.
     #[inline]
-    pub fn get_movable_list(&self, py: Python, obj: PyObject) -> PyResult<LoroMovableList> {
-        let container_id = pyobject_to_container_id(py, obj, ContainerType::MovableList {})?;
+    pub fn get_movable_list(&self, obj: &Bound<'_, PyAny>) -> PyResult<LoroMovableList> {
+        let container_id = pyobject_to_container_id(obj, ContainerType::MovableList {})?;
         Ok(LoroMovableList(self.doc.get_movable_list(container_id)))
     }
 
@@ -265,8 +265,8 @@ impl LoroDoc {
     ///
     /// If the provided id is string, it will be converted into a root container id with the name of the string.
     #[inline]
-    pub fn get_list(&self, py: Python, obj: PyObject) -> PyResult<LoroList> {
-        let container_id = pyobject_to_container_id(py, obj, ContainerType::List {})?;
+    pub fn get_list(&self, obj: &Bound<'_, PyAny>) -> PyResult<LoroList> {
+        let container_id = pyobject_to_container_id(obj, ContainerType::List {})?;
         Ok(LoroList(self.doc.get_list(container_id)))
     }
 
@@ -274,8 +274,8 @@ impl LoroDoc {
     ///
     /// If the provided id is string, it will be converted into a root container id with the name of the string.
     #[inline]
-    pub fn get_map(&self, py: Python, obj: PyObject) -> PyResult<LoroMap> {
-        let container_id = pyobject_to_container_id(py, obj, ContainerType::Map {})?;
+    pub fn get_map(&self, obj: &Bound<'_, PyAny>) -> PyResult<LoroMap> {
+        let container_id = pyobject_to_container_id(obj, ContainerType::Map {})?;
         Ok(LoroMap(self.doc.get_map(container_id)))
     }
 
@@ -283,8 +283,8 @@ impl LoroDoc {
     ///
     /// If the provided id is string, it will be converted into a root container id with the name of the string.
     #[inline]
-    pub fn get_text(&self, py: Python, obj: PyObject) -> PyResult<LoroText> {
-        let container_id = pyobject_to_container_id(py, obj, ContainerType::Text {})?;
+    pub fn get_text(&self, obj: &Bound<'_, PyAny>) -> PyResult<LoroText> {
+        let container_id = pyobject_to_container_id(obj, ContainerType::Text {})?;
         Ok(LoroText(self.doc.get_text(container_id)))
     }
 
@@ -292,8 +292,8 @@ impl LoroDoc {
     ///
     /// If the provided id is string, it will be converted into a root container id with the name of the string.
     #[inline]
-    pub fn get_tree(&self, py: Python, obj: PyObject) -> PyResult<LoroTree> {
-        let container_id = pyobject_to_container_id(py, obj, ContainerType::Tree {})?;
+    pub fn get_tree(&self, obj: &Bound<'_, PyAny>) -> PyResult<LoroTree> {
+        let container_id = pyobject_to_container_id(obj, ContainerType::Tree {})?;
         Ok(LoroTree(self.doc.get_tree(container_id)))
     }
 
@@ -301,8 +301,8 @@ impl LoroDoc {
     ///
     /// If the provided id is string, it will be converted into a root container id with the name of the string.
     #[inline]
-    pub fn get_counter(&self, py: Python, obj: PyObject) -> PyResult<LoroCounter> {
-        let container_id = pyobject_to_container_id(py, obj, ContainerType::Counter {})?;
+    pub fn get_counter(&self, obj: &Bound<'_, PyAny>) -> PyResult<LoroCounter> {
+        let container_id = pyobject_to_container_id(obj, ContainerType::Counter {})?;
         Ok(LoroCounter(self.doc.get_counter(container_id)))
     }
 

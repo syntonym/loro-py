@@ -2,7 +2,6 @@ use loro::{LoroMap as LoroMapInner, PeerID};
 use pyo3::prelude::*;
 
 use crate::{
-    convert::pyobject_to_loro_value,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, ValueOrContainer},
 };
@@ -49,8 +48,7 @@ impl LoroMap {
     // }
 
     /// Insert a key-value pair into the map.
-    pub fn insert(&self, py: Python, key: &str, value: PyObject) -> PyLoroResult<()> {
-        let value = pyobject_to_loro_value(py, value)?;
+    pub fn insert(&self, key: &str, value: LoroValue) -> PyLoroResult<()> {
         self.0.insert(key, value)?;
         Ok(())
     }

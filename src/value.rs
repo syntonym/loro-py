@@ -1,21 +1,16 @@
-use std::fmt::Display;
-use std::sync::Arc;
-
-use fxhash::FxHashMap;
 use loro::{Counter, PeerID};
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyNone, BoundObject};
+use pyo3::{exceptions::PyValueError, prelude::*, BoundObject};
+use std::fmt::Display;
 
-use crate::container::Container;
+use crate::{
+    container::Container,
+    convert::{loro_value_to_pyobject, pyobject_to_loro_value},
+};
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ID>()?;
     m.add_class::<ContainerType>()?;
     m.add_class::<ContainerID>()?;
-    m.add_class::<LoroValue>()?;
-    m.add_class::<LoroBinaryValue>()?;
-    m.add_class::<LoroStringValue>()?;
-    m.add_class::<LoroListValue>()?;
-    m.add_class::<LoroMapValue>()?;
     m.add_class::<Ordering>()?;
     m.add_class::<TreeID>()?;
     Ok(())
@@ -79,40 +74,6 @@ impl Display for ContainerID {
         write!(f, "{:?}", self)
     }
 }
-
-#[pyclass(eq, str)]
-#[derive(Debug, Clone, PartialEq)]
-pub enum LoroValue {
-    Null {},
-    Bool(bool),
-    Double(f64),
-    I64(i64),
-    Binary(LoroBinaryValue),
-    String(LoroStringValue),
-    List(LoroListValue),
-    Map(LoroMapValue),
-    Container(ContainerID),
-}
-
-impl Display for LoroValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[pyclass]
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct LoroBinaryValue(pub Arc<Vec<u8>>);
-#[pyclass]
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct LoroStringValue(pub Arc<String>);
-#[pyclass]
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct LoroListValue(pub Arc<Vec<LoroValue>>);
-
-#[pyclass]
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct LoroMapValue(pub Arc<FxHashMap<String, LoroValue>>);
 
 #[pyclass(eq, str, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -199,5 +160,45 @@ pub enum ValueOrContainer {
 impl Display for ValueOrContainer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LoroValue(pub(crate) loro::LoroValue);
+
+impl<'py> FromPyObject<'py> for LoroValue {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let value = pyobject_to_loro_value(ob)?;
+        Ok(Self(value))
+    }
+}
+
+impl<'py> IntoPyObject<'py> for LoroValue {
+    type Target = PyAny;
+
+    type Output = Bound<'py, PyAny>;
+
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        loro_value_to_pyobject(py, self)
+    }
+}
+
+impl From<loro::LoroValue> for LoroValue {
+    fn from(value: loro::LoroValue) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LoroValue> for loro::LoroValue {
+    fn from(value: LoroValue) -> Self {
+        value.0
+    }
+}
+
+impl From<&LoroValue> for loro::LoroValue {
+    fn from(value: &LoroValue) -> Self {
+        value.0.clone()
     }
 }
