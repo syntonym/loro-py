@@ -21,6 +21,7 @@ use crate::{
         ContainerDiff, Diff, DiffEvent, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
         Subscription, TextDelta, TreeDiff, TreeDiffItem, TreeExternalDiff,
     },
+    undo::{CursorWithPos, UndoItemMeta, UndoOrRedo},
     value::{ContainerID, ContainerType, LoroValue, TreeID, TreeParentId, ValueOrContainer, ID},
 };
 
@@ -453,6 +454,24 @@ impl From<loro::EventTriggerKind> for EventTriggerKind {
     }
 }
 
+impl From<loro::LoroValue> for LoroValue {
+    fn from(value: loro::LoroValue) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LoroValue> for loro::LoroValue {
+    fn from(value: LoroValue) -> Self {
+        value.0
+    }
+}
+
+impl From<&LoroValue> for loro::LoroValue {
+    fn from(value: &LoroValue) -> Self {
+        value.0.clone()
+    }
+}
+
 impl From<loro::ValueOrContainer> for ValueOrContainer {
     fn from(value: loro::ValueOrContainer) -> Self {
         match value {
@@ -631,6 +650,15 @@ impl From<CounterSpan> for loro::CounterSpan {
     }
 }
 
+impl From<loro::CounterSpan> for CounterSpan {
+    fn from(value: loro::CounterSpan) -> Self {
+        CounterSpan {
+            start: value.start,
+            end: value.end,
+        }
+    }
+}
+
 impl From<ExportMode> for loro::ExportMode<'_> {
     fn from(value: ExportMode) -> Self {
         match value {
@@ -700,6 +728,69 @@ impl From<loro::TreeNode> for TreeNode {
             parent: node.parent.into(),
             fractional_index: node.fractional_index.to_string(),
             index: node.index,
+        }
+    }
+}
+
+impl From<loro::undo::UndoOrRedo> for UndoOrRedo {
+    fn from(value: loro::undo::UndoOrRedo) -> Self {
+        match value {
+            loro::undo::UndoOrRedo::Undo => UndoOrRedo::Undo,
+            loro::undo::UndoOrRedo::Redo => UndoOrRedo::Redo,
+        }
+    }
+}
+
+impl From<AbsolutePosition> for loro::cursor::AbsolutePosition {
+    fn from(value: AbsolutePosition) -> Self {
+        Self {
+            pos: value.pos,
+            side: value.side.into(),
+        }
+    }
+}
+
+impl From<loro::cursor::AbsolutePosition> for AbsolutePosition {
+    fn from(value: loro::cursor::AbsolutePosition) -> Self {
+        Self {
+            pos: value.pos,
+            side: value.side.into(),
+        }
+    }
+}
+
+impl From<UndoItemMeta> for loro::undo::UndoItemMeta {
+    fn from(value: UndoItemMeta) -> Self {
+        Self {
+            value: value.value.into(),
+            cursors: value.cursors.into_iter().map(|x| x.into()).collect(),
+        }
+    }
+}
+
+impl From<loro::undo::UndoItemMeta> for UndoItemMeta {
+    fn from(value: loro::undo::UndoItemMeta) -> Self {
+        Self {
+            value: value.value.into(),
+            cursors: value.cursors.into_iter().map(|x| x.into()).collect(),
+        }
+    }
+}
+
+impl From<CursorWithPos> for loro::undo::CursorWithPos {
+    fn from(value: CursorWithPos) -> Self {
+        Self {
+            cursor: value.cursor.into(),
+            pos: value.pos.into(),
+        }
+    }
+}
+
+impl From<loro::undo::CursorWithPos> for CursorWithPos {
+    fn from(value: loro::undo::CursorWithPos) -> Self {
+        Self {
+            cursor: value.cursor.into(),
+            pos: value.pos.into(),
         }
     }
 }

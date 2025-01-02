@@ -22,7 +22,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-#[pyclass(str, get_all, set_all)]
+#[pyclass(str, get_all)]
 #[derive(Debug)]
 pub struct DiffEvent {
     /// How the event is triggered.

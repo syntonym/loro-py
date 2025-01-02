@@ -184,21 +184,3 @@ impl<'py> IntoPyObject<'py> for LoroValue {
         loro_value_to_pyobject(py, self)
     }
 }
-
-impl From<loro::LoroValue> for LoroValue {
-    fn from(value: loro::LoroValue) -> Self {
-        Self(value)
-    }
-}
-
-impl From<LoroValue> for loro::LoroValue {
-    fn from(value: LoroValue) -> Self {
-        value.0
-    }
-}
-
-impl From<&LoroValue> for loro::LoroValue {
-    fn from(value: &LoroValue) -> Self {
-        value.0.clone()
-    }
-}

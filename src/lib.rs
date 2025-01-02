@@ -5,6 +5,7 @@ mod convert;
 mod doc;
 mod err;
 mod event;
+mod undo;
 mod value;
 mod version;
 
@@ -16,5 +17,6 @@ fn loro(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     event::register_class(m)?;
     value::register_class(m)?;
     version::register_class(m)?;
+    undo::register_class(m)?;
     Ok(())
 }

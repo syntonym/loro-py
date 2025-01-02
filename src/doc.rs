@@ -34,7 +34,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
 #[pyclass(frozen)]
 pub struct LoroDoc {
-    doc: LoroDocInner,
+    pub(crate) doc: LoroDocInner,
 }
 
 impl Default for LoroDoc {
@@ -909,7 +909,7 @@ pub struct PosQueryResult {
     pub current: AbsolutePosition,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, IntoPyObject)]
+#[derive(Debug, Clone, PartialEq, Eq, IntoPyObject, FromPyObject)]
 pub struct AbsolutePosition {
     pub pos: usize,
     /// The target position is at the left, middle, or right of the given pos.
