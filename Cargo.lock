@@ -410,7 +410,7 @@ dependencies = [
 
 [[package]]
 name = "loro"
-version = "1.2.5-alpha.0"
+version = "1.2.5-alpha"
 dependencies = [
  "fxhash",
  "loro 1.1.0",
