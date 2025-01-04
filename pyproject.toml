@@ -23,4 +23,3 @@ Repository = "https://github.com/loro-dev/loro-py"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
-python-source = "python"

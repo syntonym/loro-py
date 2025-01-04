@@ -43,13 +43,31 @@ impl LoroMap {
         Ok(())
     }
 
-    // /// Iterate over the key-value pairs of the map.
-    // pub fn for_each<I>(&self, f: I)
-    // where
-    //     I: FnMut(&str, ValueOrHandler),
-    // {
-    //     self.0.for_each(f)
-    // }
+    /// Iterate over the key-value pairs of the map.
+    // TODO: why valueOrHandler?
+    pub fn for_each(&self, f: PyObject) {
+        Python::with_gil(|py| {
+            self.0.for_each(move |key, value| {
+                f.call1(
+                    py,
+                    (
+                        key,
+                        match value {
+                            loro_internal::handler::ValueOrHandler::Value(v) => {
+                                ValueOrContainer::Value { value: v.into() }
+                            }
+                            loro_internal::handler::ValueOrHandler::Handler(h) => {
+                                ValueOrContainer::Container {
+                                    container: loro::Container::from(h).into(),
+                                }
+                            }
+                        },
+                    ),
+                )
+                .unwrap();
+            })
+        });
+    }
 
     /// Insert a key-value pair into the map.
     pub fn insert(&self, key: &str, value: LoroValue) -> PyLoroResult<()> {
@@ -69,7 +87,6 @@ impl LoroMap {
     }
 
     /// Whether the map is empty.
-    #[getter]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -134,13 +151,7 @@ impl LoroMap {
 
     /// Get the values of the map.
     pub fn values(&self) -> Vec<ValueOrContainer> {
-        self.0
-            .values()
-            .map(|v| match v {
-                loro::ValueOrContainer::Value(v) => ValueOrContainer::Value(v.into()),
-                loro::ValueOrContainer::Container(c) => ValueOrContainer::Container(c.into()),
-            })
-            .collect()
+        self.0.values().map(ValueOrContainer::from).collect()
     }
 
     /// Get the peer id of the last editor on the given entry

@@ -71,55 +71,45 @@ impl UndoManager {
 
     /// Set the listener for push events.
     /// The listener will be called when a new undo/redo item is pushed into the stack.
-    #[pyo3(signature = (on_push=None))]
-    pub fn set_on_push(&mut self, on_push: Option<PyObject>) {
-        if let Some(on_push) = on_push {
-            self.0
-                .set_on_push(Some(Box::new(move |undo_or_redo, span, event| {
-                    Python::with_gil(|py| {
-                        let meta = on_push
-                            .call1(
-                                py,
-                                (
-                                    UndoOrRedo::from(undo_or_redo),
-                                    CounterSpan::from(span),
-                                    event.map(|x| DiffEvent::from(loro::event::DiffEvent::from(x))),
-                                ),
-                            )
-                            .unwrap()
-                            .extract::<UndoItemMeta>(py)
-                            .unwrap();
-                        loro::undo::UndoItemMeta::from(meta)
-                    })
-                })));
-        } else {
-            self.0.set_on_push(None);
-        }
+    pub fn set_on_push(&mut self, on_push: PyObject) {
+        self.0
+            .set_on_push(Some(Box::new(move |undo_or_redo, span, event| {
+                Python::with_gil(|py| {
+                    let meta = on_push
+                        .call1(
+                            py,
+                            (
+                                UndoOrRedo::from(undo_or_redo),
+                                CounterSpan::from(span),
+                                event.map(|x| DiffEvent::from(loro::event::DiffEvent::from(x))),
+                            ),
+                        )
+                        .unwrap()
+                        .extract::<UndoItemMeta>(py)
+                        .unwrap();
+                    loro::undo::UndoItemMeta::from(meta)
+                })
+            })));
     }
 
     /// Set the listener for pop events.
     /// The listener will be called when an undo/redo item is popped from the stack.
-    #[pyo3(signature = (on_pop=None))]
-    pub fn set_on_pop(&mut self, on_pop: Option<PyObject>) {
-        if let Some(on_pop) = on_pop {
-            self.0
-                .set_on_pop(Some(Box::new(move |undo_or_redo, span, meta| {
-                    Python::with_gil(|py| {
-                        on_pop
-                            .call1(
-                                py,
-                                (
-                                    UndoOrRedo::from(undo_or_redo),
-                                    CounterSpan::from(span),
-                                    UndoItemMeta::from(meta),
-                                ),
-                            )
-                            .unwrap();
-                    })
-                })));
-        } else {
-            self.0.set_on_pop(None);
-        }
+    pub fn set_on_pop(&mut self, on_pop: PyObject) {
+        self.0
+            .set_on_pop(Some(Box::new(move |undo_or_redo, span, meta| {
+                Python::with_gil(|py| {
+                    on_pop
+                        .call1(
+                            py,
+                            (
+                                UndoOrRedo::from(undo_or_redo),
+                                CounterSpan::from(span),
+                                UndoItemMeta::from(meta),
+                            ),
+                        )
+                        .unwrap();
+                })
+            })));
     }
 
     /// Clear the undo stack and the redo stack
@@ -136,13 +126,17 @@ pub enum UndoOrRedo {
     Redo,
 }
 
-#[derive(Debug, Clone, IntoPyObject, FromPyObject)]
+#[gen_stub_pyclass]
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
 pub struct UndoItemMeta {
     pub value: LoroValue,
     pub cursors: Vec<CursorWithPos>,
 }
 
-#[derive(Debug, Clone, IntoPyObject, FromPyObject)]
+#[gen_stub_pyclass]
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
 pub struct CursorWithPos {
     pub cursor: Cursor,
     pub pos: AbsolutePosition,

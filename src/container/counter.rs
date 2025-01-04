@@ -18,6 +18,7 @@ impl LoroCounter {
     }
 
     /// Return container id of the Counter.
+    #[getter]
     pub fn id(&self) -> ContainerID {
         self.0.id().into()
     }

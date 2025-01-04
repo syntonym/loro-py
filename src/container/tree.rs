@@ -9,6 +9,12 @@ use crate::{
 
 use super::LoroMap;
 
+pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<LoroTree>()?;
+    m.add_class::<TreeNode>()?;
+    Ok(())
+}
+
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Debug, Clone, Default)]
@@ -52,7 +58,7 @@ impl LoroTree {
     /// // create a new child
     /// let child = tree.create(root).unwrap();
     /// ```
-    #[pyo3(signature = (parent=TreeParentId::Root))]
+    #[pyo3(signature = (parent=TreeParentId::Root {}))]
     pub fn create(&self, parent: TreeParentId) -> PyLoroResult<TreeID> {
         let ans = self.0.create(parent)?.into();
         Ok(ans)
@@ -327,7 +333,8 @@ impl LoroTree {
 
 /// A tree node in the [LoroTree].
 #[gen_stub_pyclass]
-#[derive(Debug, Clone, FromPyObject, IntoPyObject)]
+#[pyclass(str, get_all, set_all)]
+#[derive(Debug, Clone)]
 pub struct TreeNode {
     /// ID of the tree node.
     pub id: TreeID,
@@ -339,4 +346,10 @@ pub struct TreeNode {
     pub fractional_index: String,
     /// The current index of the node in its parent's children list.
     pub index: usize,
+}
+
+impl std::fmt::Display for TreeNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }

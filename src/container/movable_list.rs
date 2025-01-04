@@ -63,8 +63,6 @@ impl LoroMovableList {
     }
 
     /// Whether the list is empty.
-    #[must_use]
-    #[getter]
     pub fn is_empty(&self) -> bool {
         self.__len__() == 0
     }
@@ -108,8 +106,8 @@ impl LoroMovableList {
     }
 
     /// Move the value at the given position to the given position.
-    pub fn mov(&self, from: usize, to: usize) -> PyLoroResult<()> {
-        self.0.mov(from, to)?;
+    pub fn mov(&self, from_: usize, to: usize) -> PyLoroResult<()> {
+        self.0.mov(from_, to)?;
         Ok(())
     }
 

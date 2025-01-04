@@ -103,7 +103,6 @@ impl LoroText {
     }
 
     /// Whether the text container is empty.
-    #[getter]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -329,7 +328,7 @@ pub enum Side {
 }
 
 #[gen_stub_pyclass]
-#[pyclass(str)]
+#[pyclass(str, frozen)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Cursor(pub loro::cursor::Cursor);
 

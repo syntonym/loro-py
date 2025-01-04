@@ -1,13 +1,15 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use loro::PeerID;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyBytes};
 use pyo3_stub_gen::derive::*;
 
 use crate::value::LoroValue;
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Awareness>()?;
+    m.add_class::<AwarenessPeerUpdate>()?;
+    m.add_class::<PeerInfo>()?;
     Ok(())
 }
 
@@ -23,16 +25,18 @@ impl Awareness {
         Self(loro::awareness::Awareness::new(peer, timeout))
     }
 
-    pub fn encode(&self, peers: Vec<PeerID>) -> Vec<u8> {
-        self.0.encode(&peers)
+    pub fn encode(&self, peers: Vec<PeerID>) -> Cow<[u8]> {
+        let ans: Vec<u8> = self.0.encode(&peers);
+        Cow::Owned(ans)
     }
 
-    pub fn encode_all(&self) -> Vec<u8> {
-        self.0.encode_all()
+    pub fn encode_all(&self) -> Cow<[u8]> {
+        let ans: Vec<u8> = self.0.encode_all();
+        Cow::Owned(ans)
     }
 
-    pub fn apply(&mut self, encoded_peers_info: Vec<u8>) -> AwarenessPeerUpdate {
-        let (updated, added) = self.0.apply(&encoded_peers_info);
+    pub fn apply(&mut self, encoded_peers_info: Bound<'_, PyBytes>) -> AwarenessPeerUpdate {
+        let (updated, added) = self.0.apply(encoded_peers_info.as_bytes());
         AwarenessPeerUpdate { updated, added }
     }
 
@@ -69,14 +73,16 @@ impl Awareness {
 }
 
 #[gen_stub_pyclass]
-#[derive(Debug, Clone, IntoPyObject)]
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
 pub struct AwarenessPeerUpdate {
     pub updated: Vec<PeerID>,
     pub added: Vec<PeerID>,
 }
 
 #[gen_stub_pyclass]
-#[derive(Debug, Clone, IntoPyObject)]
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
 pub struct PeerInfo {
     pub state: LoroValue,
     pub counter: i32,

@@ -538,19 +538,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "loro"
-version = "1.2.5-alpha"
-dependencies = [
- "fxhash",
- "loro 1.1.0",
- "loro-internal",
- "pyo3",
- "pyo3-stub-gen",
- "pyo3-stub-gen-derive",
- "serde_json",
-]
-
-[[package]]
 name = "loro-common"
 version = "1.1.0"
 source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
@@ -658,6 +645,18 @@ dependencies = [
  "once_cell",
  "rand",
  "serde",
+]
+
+[[package]]
+name = "loro_py"
+version = "1.2.5-alpha"
+dependencies = [
+ "fxhash",
+ "loro",
+ "loro-internal",
+ "pyo3",
+ "pyo3-stub-gen",
+ "serde_json",
 ]
 
 [[package]]
@@ -971,9 +970,7 @@ dependencies = [
 
 [[package]]
 name = "pyo3-stub-gen"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e2906d67f2fa9b6079665a1d097c25530f54a8a6a40da5544370786f0adb523"
+version = "0.6.3"
 dependencies = [
  "anyhow",
  "chrono",
@@ -991,9 +988,7 @@ dependencies = [
 
 [[package]]
 name = "pyo3-stub-gen-derive"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea3f50b3dca9a392772e45ed6db1066773c74d2be00399f46ab53cbab67a36f9"
+version = "0.6.3"
 dependencies = [
  "proc-macro2",
  "quote",

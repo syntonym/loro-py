@@ -112,7 +112,6 @@ impl LoroList {
     }
 
     /// Whether the list is empty.
-    #[getter]
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -133,15 +132,8 @@ impl LoroList {
     /// assert_eq!(doc.get_deep_value().to_json_value(), json!({"m": ["012"]}));
     /// ```
     #[inline]
-    pub fn insert_container(
-        &self,
-        py: Python,
-        pos: usize,
-        child: PyObject,
-    ) -> PyLoroResult<Container> {
-        let container = self
-            .0
-            .insert_container(pos, loro::Container::from(child.extract::<Container>(py)?))?;
+    pub fn insert_container(&self, pos: usize, child: Container) -> PyLoroResult<Container> {
+        let container = self.0.insert_container(pos, loro::Container::from(child))?;
         Ok(container.into())
     }
 

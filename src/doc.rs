@@ -2,10 +2,10 @@ use loro::{Counter, Lamport, LoroDoc as LoroDocInner, PeerID, Timestamp};
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
-    types::{PyBytes, PyDict, PyType},
+    types::{PyBytes, PyType},
 };
 use pyo3_stub_gen::derive::*;
-use std::{collections::HashSet, fmt::Display, ops::ControlFlow, sync::Arc};
+use std::{borrow::Cow, collections::HashSet, fmt::Display, ops::ControlFlow, sync::Arc};
 
 use crate::{
     container::{
@@ -22,10 +22,15 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LoroDoc>()?;
     m.add_class::<Configure>()?;
     m.add_class::<ImportStatus>()?;
-    m.add_class::<CommitOptions>()?;
+    m.add_class::<PosQueryResult>()?;
     m.add_class::<EncodedBlobMode>()?;
-    m.add_class::<ExpandType>()?;
+    m.add_class::<ImportBlobMetadata>()?;
     m.add_class::<StyleConfigMap>()?;
+    m.add_class::<ExportMode>()?;
+    m.add_class::<IdSpan>()?;
+    m.add_class::<CounterSpan>()?;
+    m.add_class::<ExpandType>()?;
+    m.add_class::<ChangeMeta>()?;
     Ok(())
 }
 
@@ -99,10 +104,10 @@ impl LoroDoc {
     #[classmethod]
     pub fn decode_import_blob_meta(
         _cls: &Bound<'_, PyType>,
-        bytes: Vec<u8>,
+        bytes: Bound<'_, PyBytes>,
         check_checksum: bool,
     ) -> PyLoroResult<ImportBlobMetadata> {
-        let meta = LoroDocInner::decode_import_blob_meta(&bytes, check_checksum)?;
+        let meta = LoroDocInner::decode_import_blob_meta(bytes.as_bytes(), check_checksum)?;
         Ok(meta.into())
     }
 
@@ -214,7 +219,7 @@ impl LoroDoc {
     ///
     /// If `other` contains any version that's not contained in the current OpLog, return [Ordering::Less].
     #[inline]
-    pub fn cmp_with_frontiers(&self, other: Frontiers) -> Ordering {
+    pub fn cmp_with_frontiers(&self, other: &Frontiers) -> Ordering {
         self.doc.cmp_with_frontiers(&other.into()).into()
     }
 
@@ -222,7 +227,7 @@ impl LoroDoc {
     ///
     /// If the frontiers are not included in the document, return [`FrontiersNotIncluded`].
     #[inline]
-    pub fn cmp_frontiers(&self, a: Frontiers, b: Frontiers) -> PyResult<Option<Ordering>> {
+    pub fn cmp_frontiers(&self, a: &Frontiers, b: &Frontiers) -> PyResult<Option<Ordering>> {
         let ans = self
             .doc
             .cmp_frontiers(&a.into(), &b.into())
@@ -324,9 +329,21 @@ impl LoroDoc {
     /// There is a transaction behind every operation.
     /// It will automatically commit when users invoke export or import.
     /// The event will be sent after a transaction is committed
+    #[pyo3(signature = (origin=None, timestamp=None, immediate_renew=true, commit_msg=None))]
     #[inline]
-    pub fn commit_with(&self, options: &CommitOptions) {
-        self.doc.commit_with(options.into())
+    pub fn commit_with(
+        &self,
+        origin: Option<&str>,
+        timestamp: Option<i64>,
+        immediate_renew: Option<bool>,
+        commit_msg: Option<&str>,
+    ) {
+        self.doc.commit_with(loro::CommitOptions {
+            origin: origin.map(|s| s.into()),
+            immediate_renew: immediate_renew.unwrap_or(true),
+            timestamp,
+            commit_msg: commit_msg.map(|s| s.into()),
+        })
     }
 
     /// Set commit message for the current uncommitted changes
@@ -344,8 +361,8 @@ impl LoroDoc {
     /// Import updates/snapshot exported by [`LoroDoc::export_snapshot`] or [`LoroDoc::export_from`].
     #[pyo3(name = "import_")]
     #[inline]
-    pub fn import(&self, bytes: Vec<u8>) -> PyLoroResult<ImportStatus> {
-        let status = self.doc.import(&bytes)?;
+    pub fn import(&self, bytes: Bound<'_, PyBytes>) -> PyLoroResult<ImportStatus> {
+        let status = self.doc.import(bytes.as_bytes())?;
         Ok(ImportStatus::from(status))
     }
 
@@ -354,8 +371,12 @@ impl LoroDoc {
     /// It marks the import with a custom `origin` string. It can be used to track the import source
     /// in the generated events.
     #[inline]
-    pub fn import_with(&self, bytes: Vec<u8>, origin: &str) -> PyLoroResult<ImportStatus> {
-        let status = self.doc.import_with(&bytes, origin)?;
+    pub fn import_with(
+        &self,
+        bytes: Bound<'_, PyBytes>,
+        origin: &str,
+    ) -> PyLoroResult<ImportStatus> {
+        let status = self.doc.import_with(&bytes.as_bytes(), origin)?;
         Ok(ImportStatus::from(status))
     }
 
@@ -726,9 +747,9 @@ impl LoroDoc {
     }
 
     /// Export the document in the given mode.
-    pub fn export(&self, mode: ExportMode) -> PyLoroResult<Vec<u8>> {
+    pub fn export(&self, mode: ExportMode) -> PyLoroResult<Cow<[u8]>> {
         let ans = self.doc.export(mode.into())?;
-        Ok(ans)
+        Ok(Cow::Owned(ans))
     }
 
     // /// Analyze the container info of the doc
@@ -802,7 +823,7 @@ impl LoroDoc {
     /// # Arguments
     ///
     /// * `ids` - The IDs of the Change to start the traversal from.
-    /// * `cb` - A callback function that is called for each ancestor. It can return `ControlFlow::Break(())` to stop the traversal.
+    /// * `cb` - A callback function that is called for each ancestor. It can return `True` to stop the traversal.
     pub fn travel_change_ancestors(&self, ids: Vec<ID>, cb: PyObject) -> PyLoroResult<()> {
         self.doc.travel_change_ancestors(
             &ids.into_iter().map(|id| id.into()).collect::<Vec<_>>(),
@@ -852,12 +873,6 @@ impl LoroDoc {
 #[pyclass(frozen)]
 pub struct Configure(pub loro::Configure);
 
-impl From<loro::Configure> for Configure {
-    fn from(value: loro::Configure) -> Self {
-        Self(value)
-    }
-}
-
 // TODO: Implement the methods for Configure
 
 #[gen_stub_pyclass]
@@ -885,132 +900,69 @@ impl Display for ImportStatus {
 }
 
 #[gen_stub_pyclass]
-#[pyclass(get_all, set_all, str)]
-#[derive(Debug)]
-pub struct CommitOptions {
-    pub origin: Option<String>,
-    pub immediate_renew: bool,
-    pub timestamp: Option<Timestamp>,
-    pub commit_msg: Option<String>,
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PosQueryResult {
+    pub update: Option<Cursor>,
+    pub current: AbsolutePosition,
 }
 
-impl From<&CommitOptions> for loro::CommitOptions {
-    fn from(value: &CommitOptions) -> Self {
-        loro::CommitOptions {
-            origin: value.origin.clone().map(|x| x.into()),
-            immediate_renew: value.immediate_renew,
-            timestamp: value.timestamp,
-            commit_msg: value.commit_msg.clone().map(|x| x.into()),
-        }
-    }
-}
-
-impl Display for CommitOptions {
+impl Display for PosQueryResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 #[gen_stub_pyclass]
-#[derive(Debug, Clone, PartialEq, Eq, IntoPyObject)]
-pub struct PosQueryResult {
-    pub update: Option<Cursor>,
-    pub current: AbsolutePosition,
-}
-
-#[gen_stub_pyclass]
-#[derive(Debug, Clone, PartialEq, Eq, IntoPyObject, FromPyObject)]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AbsolutePosition {
     pub pos: usize,
     /// The target position is at the left, middle, or right of the given pos.
     pub side: Side,
 }
 
+impl Display for AbsolutePosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[gen_stub_pyclass_enum]
+#[pyclass]
+#[derive(Debug, Clone)]
 pub enum ExportMode {
-    Snapshot,
-    Updates { from: VersionVector },
+    Snapshot {},
+    Updates { from_: VersionVector },
     UpdatesInRange { spans: Vec<IdSpan> },
     ShallowSnapshot { frontiers: Frontiers },
     StateOnly { frontiers: Option<Frontiers> },
     SnapshotAt { version: Frontiers },
 }
 
-impl<'py> FromPyObject<'py> for ExportMode {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-        let dict = ob
-            .downcast::<PyDict>()
-            .map_err(|_| PyErr::new::<PyValueError, _>("Expected a dictionary for export mode"))?;
-
-        let mode = dict
-            .get_item("mode")?
-            .ok_or_else(|| PyErr::new::<PyValueError, _>("mode is required"))?
-            .extract::<String>()?;
-
-        match mode.as_str() {
-            "snapshot" => Ok(ExportMode::Snapshot),
-            "updates" => {
-                let from = dict
-                    .get_item("from")?
-                    .ok_or_else(|| {
-                        PyErr::new::<PyValueError, _>("from is required for updates mode")
-                    })?
-                    .extract::<VersionVector>()?;
-                Ok(ExportMode::Updates { from })
-            }
-            "updates_in_range" => {
-                let spans = dict
-                    .get_item("spans")?
-                    .ok_or_else(|| {
-                        PyErr::new::<PyValueError, _>("spans is required for updates_in_range mode")
-                    })?
-                    .extract::<Vec<IdSpan>>()?;
-                Ok(ExportMode::UpdatesInRange { spans })
-            }
-            "shallow_snapshot" => {
-                let frontiers = dict
-                    .get_item("frontiers")?
-                    .ok_or_else(|| {
-                        PyErr::new::<PyValueError, _>(
-                            "frontiers is required for shallow_snapshot mode",
-                        )
-                    })?
-                    .extract::<Frontiers>()?;
-                Ok(ExportMode::ShallowSnapshot { frontiers })
-            }
-            "state_only" => {
-                let frontiers = dict
-                    .get_item("frontiers")?
-                    .ok_or_else(|| {
-                        PyErr::new::<PyValueError, _>("frontiers is required for state_only mode")
-                    })?
-                    .extract::<Option<Frontiers>>()?;
-                Ok(ExportMode::StateOnly { frontiers })
-            }
-            "snapshot_at" => {
-                let version = dict
-                    .get_item("version")?
-                    .ok_or_else(|| {
-                        PyErr::new::<PyValueError, _>("version is required for snapshot_at mode")
-                    })?
-                    .extract::<Frontiers>()?;
-                Ok(ExportMode::SnapshotAt { version })
-            }
-            _ => Err(PyErr::new::<PyValueError, _>(format!(
-                "Invalid export mode: {}",
-                mode
-            ))),
-        }
-    }
-}
-
 /// This struct supports reverse repr: [CounterSpan]'s from can be less than to. But we should use it conservatively.
 /// We need this because it'll make merging deletions easier.
 #[gen_stub_pyclass]
-#[derive(Clone, Copy, PartialEq, Eq, FromPyObject)]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IdSpan {
     pub peer: PeerID,
     pub counter: CounterSpan,
+}
+
+impl Display for IdSpan {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl IdSpan {
+    #[new]
+    pub fn new(peer: PeerID, counter: CounterSpan) -> Self {
+        Self { peer, counter }
+    }
 }
 
 /// This struct supports reverse repr: `from` can be less than `to`.
@@ -1019,14 +971,31 @@ pub struct IdSpan {
 /// But we should use it behavior conservatively.
 /// If it is not necessary to be reverse, it should not.
 #[gen_stub_pyclass]
-#[derive(Clone, Copy, PartialEq, Eq, FromPyObject, IntoPyObject)]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CounterSpan {
     pub start: Counter,
     pub end: Counter,
 }
 
+#[gen_stub_pymethods]
+#[pymethods]
+impl CounterSpan {
+    #[new]
+    pub fn new(start: Counter, end: Counter) -> Self {
+        Self { start, end }
+    }
+}
+
+impl Display for CounterSpan {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[gen_stub_pyclass]
-#[derive(Clone, IntoPyObject)]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone)]
 pub struct ChangeMeta {
     /// Lamport timestamp of the Change
     pub lamport: Lamport,
@@ -1043,8 +1012,15 @@ pub struct ChangeMeta {
     pub len: usize,
 }
 
+impl Display for ChangeMeta {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[gen_stub_pyclass]
-#[derive(Clone, IntoPyObject)]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone)]
 pub struct ImportBlobMetadata {
     /// The partial start version vector.
     ///
@@ -1063,6 +1039,12 @@ pub struct ImportBlobMetadata {
     pub end_timestamp: i64,
     pub change_num: u32,
     pub mode: EncodedBlobMode,
+}
+
+impl Display for ImportBlobMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[gen_stub_pyclass_enum]
@@ -1123,7 +1105,7 @@ impl Display for StyleConfigMap {
 /// - Before: when inserting new text before this style, the new text should inherit this style.
 /// - After: when inserting new text after this style, the new text should inherit this style.
 /// - Both: when inserting new text before or after this style, the new text should inherit this style.
-/// - None: when inserting new text before or after this style, the new text should **not** inherit this style.
+/// - Null: when inserting new text before or after this style, the new text should **not** inherit this style.
 #[gen_stub_pyclass_enum]
 #[pyclass(eq, eq_int)]
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
@@ -1131,5 +1113,5 @@ pub enum ExpandType {
     Before,
     After,
     Both,
-    None,
+    Null,
 }

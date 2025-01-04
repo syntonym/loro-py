@@ -1,5 +1,5 @@
 use loro::{Counter, PeerID};
-use pyo3::{exceptions::PyValueError, prelude::*, BoundObject};
+use pyo3::prelude::*;
 use pyo3_stub_gen::derive::*;
 use std::fmt::Display;
 
@@ -120,50 +120,51 @@ impl Display for TreeID {
 }
 
 #[gen_stub_pyclass_enum]
+#[pyclass]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TreeParentId {
-    Node(TreeID),
-    Root,
-    Deleted,
-    Unexist,
+    Node { node: TreeID },
+    Root {},
+    Deleted {},
+    Unexist {},
 }
 
-impl<'py> FromPyObject<'py> for TreeParentId {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-        if ob.is_instance_of::<TreeID>() {
-            Ok(TreeParentId::Node(ob.extract::<TreeID>()?))
-        } else if ob.is_none() {
-            Ok(TreeParentId::Root)
-        } else {
-            Err(PyValueError::new_err("Invalid tree parent id"))
-        }
-    }
-}
+// impl<'py> FromPyObject<'py> for TreeParentId {
+//     fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+//         if ob.is_instance_of::<TreeID>() {
+//             Ok(TreeParentId::Node(ob.extract::<TreeID>()?))
+//         } else if ob.is_none() {
+//             Ok(TreeParentId::Root)
+//         } else {
+//             Err(PyValueError::new_err("Invalid tree parent id"))
+//         }
+//     }
+// }
 
-impl<'py> IntoPyObject<'py> for TreeParentId {
-    type Target = PyAny;
+// impl<'py> IntoPyObject<'py> for TreeParentId {
+//     type Target = PyAny;
 
-    type Output = Bound<'py, PyAny>;
+//     type Output = Bound<'py, PyAny>;
 
-    type Error = PyErr;
+//     type Error = PyErr;
 
-    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-        let ans = match self {
-            TreeParentId::Node(id) => id.into_pyobject(py)?.into_any().into_bound(),
-            TreeParentId::Root => py.None().into_pyobject(py)?.into_any().into_bound(),
-            TreeParentId::Deleted | TreeParentId::Unexist => {
-                return Err(PyValueError::new_err("Invalid tree parent id"))
-            }
-        };
-        Ok(ans)
-    }
-}
+//     fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+//         let ans = match self {
+//             TreeParentId::Node(id) => id.into_pyobject(py)?.into_any().into_bound(),
+//             TreeParentId::Root => py.None().into_pyobject(py)?.into_any().into_bound(),
+//             TreeParentId::Deleted | TreeParentId::Unexist => {
+//                 return Err(PyValueError::new_err("Invalid tree parent id"))
+//             }
+//         };
+//         Ok(ans)
+//     }
+// }
 
 #[gen_stub_pyclass_enum]
 #[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 pub enum ValueOrContainer {
-    Value(LoroValue),
-    Container(Container),
+    Value { value: LoroValue },
+    Container { container: Container },
 }
 
 impl Display for ValueOrContainer {

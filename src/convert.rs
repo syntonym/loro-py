@@ -15,8 +15,8 @@ use crate::{
         LoroUnknown, Side, TreeNode, UpdateOptions,
     },
     doc::{
-        AbsolutePosition, ChangeMeta, CounterSpan, EncodedBlobMode, ExpandType, ExportMode, IdSpan,
-        ImportBlobMetadata, PosQueryResult,
+        AbsolutePosition, ChangeMeta, Configure, CounterSpan, EncodedBlobMode, ExpandType,
+        ExportMode, IdSpan, ImportBlobMetadata, PosQueryResult,
     },
     event::{
         ContainerDiff, Diff, DiffEvent, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
@@ -296,7 +296,7 @@ impl From<loro::TreeID> for TreeID {
 impl From<TreeParentId> for loro::TreeParentId {
     fn from(value: TreeParentId) -> Self {
         match value {
-            TreeParentId::Node(id) => loro::TreeParentId::Node(id.into()),
+            TreeParentId::Node { node } => loro::TreeParentId::Node(node.into()),
             TreeParentId::Root {} => loro::TreeParentId::Root,
             TreeParentId::Deleted {} => loro::TreeParentId::Deleted,
             TreeParentId::Unexist {} => loro::TreeParentId::Unexist,
@@ -307,10 +307,24 @@ impl From<TreeParentId> for loro::TreeParentId {
 impl From<loro::TreeParentId> for TreeParentId {
     fn from(value: loro::TreeParentId) -> Self {
         match value {
-            loro::TreeParentId::Node(id) => TreeParentId::Node(id.into()),
+            loro::TreeParentId::Node(id) => TreeParentId::Node { node: id.into() },
             loro::TreeParentId::Root => TreeParentId::Root {},
             loro::TreeParentId::Deleted => TreeParentId::Deleted {},
             loro::TreeParentId::Unexist => TreeParentId::Unexist {},
+        }
+    }
+}
+impl From<loro::Configure> for Configure {
+    fn from(value: loro::Configure) -> Self {
+        Self(value)
+    }
+}
+
+impl From<loro::IdSpan> for IdSpan {
+    fn from(value: loro::IdSpan) -> Self {
+        Self {
+            peer: value.peer,
+            counter: value.counter.into(),
         }
     }
 }
@@ -336,9 +350,15 @@ impl<'a> From<&loro::event::ContainerDiff<'a>> for ContainerDiff {
 impl From<&loro::Index> for Index {
     fn from(value: &loro::Index) -> Self {
         match value {
-            loro::Index::Key(key) => Index::Key(key.to_string()),
-            loro::Index::Seq(index) => Index::Seq(*index as u32),
-            loro::Index::Node(target) => Index::Node((*target).into()),
+            loro::Index::Key(key) => Index::Key {
+                key: key.to_string(),
+            },
+            loro::Index::Seq(index) => Index::Seq {
+                index: *index as u32,
+            },
+            loro::Index::Node(target) => Index::Node {
+                target: (*target).into(),
+            },
         }
     }
 }
@@ -346,9 +366,9 @@ impl From<&loro::Index> for Index {
 impl From<Index> for loro::Index {
     fn from(value: Index) -> loro::Index {
         match value {
-            Index::Key(key) => loro::Index::Key(key.into()),
-            Index::Seq(index) => loro::Index::Seq(index as usize),
-            Index::Node(target) => loro::Index::Node(target.into()),
+            Index::Key { key } => loro::Index::Key(key.into()),
+            Index::Seq { index } => loro::Index::Seq(index as usize),
+            Index::Node { target } => loro::Index::Node(target.into()),
         }
     }
 }
@@ -382,18 +402,20 @@ impl From<&loro::event::Diff<'_>> for Diff {
                         }
                     }
                 }
-                Diff::List(ans)
+                Diff::List { diff: ans }
             }
-            loro::event::Diff::Text(t) => {
-                Diff::Text(t.iter().map(|x| x.into()).collect::<Vec<_>>())
-            }
+            loro::event::Diff::Text(t) => Diff::Text {
+                diff: t.iter().map(|x| x.into()).collect::<Vec<_>>(),
+            },
             loro::event::Diff::Map(m) => {
                 let mut updated = HashMap::new();
                 for (key, value) in m.updated.iter() {
                     updated.insert(key.to_string(), value.as_ref().map(|v| v.clone().into()));
                 }
 
-                Diff::Map(MapDelta { updated })
+                Diff::Map {
+                    diff: MapDelta { updated },
+                }
             }
             loro::event::Diff::Tree(t) => {
                 let mut diff = Vec::new();
@@ -433,10 +455,12 @@ impl From<&loro::event::Diff<'_>> for Diff {
                         },
                     });
                 }
-                Diff::Tree(TreeDiff { diff })
+                Diff::Tree {
+                    diff: TreeDiff { diff },
+                }
             }
-            loro::event::Diff::Counter(c) => Diff::Counter(*c),
-            loro::event::Diff::Unknown => Diff::Unknown(()),
+            loro::event::Diff::Counter(c) => Diff::Counter { diff: *c },
+            loro::event::Diff::Unknown {} => Diff::Unknown {},
         }
     }
 }
@@ -471,8 +495,19 @@ impl From<&LoroValue> for loro::LoroValue {
 impl From<loro::ValueOrContainer> for ValueOrContainer {
     fn from(value: loro::ValueOrContainer) -> Self {
         match value {
-            loro::ValueOrContainer::Value(v) => ValueOrContainer::Value(v.into()),
-            loro::ValueOrContainer::Container(c) => ValueOrContainer::Container(c.into()),
+            loro::ValueOrContainer::Value(v) => ValueOrContainer::Value { value: v.into() },
+            loro::ValueOrContainer::Container(c) => ValueOrContainer::Container {
+                container: c.into(),
+            },
+        }
+    }
+}
+
+impl From<ValueOrContainer> for loro::ValueOrContainer {
+    fn from(value: ValueOrContainer) -> Self {
+        match value {
+            ValueOrContainer::Value { value } => Self::Value(value.into()),
+            ValueOrContainer::Container { container } => Self::Container(container.into()),
         }
     }
 }
@@ -507,9 +542,9 @@ impl From<Container> for loro::Container {
 impl From<&Index> for loro::Index {
     fn from(value: &Index) -> Self {
         match value {
-            Index::Key(key) => loro::Index::Key(key.clone().into()),
-            Index::Seq(index) => loro::Index::Seq(*index as usize),
-            Index::Node(target) => loro::Index::Node((*target).into()),
+            Index::Key { key } => loro::Index::Key(key.clone().into()),
+            Index::Seq { index } => loro::Index::Seq(*index as usize),
+            Index::Node { target } => loro::Index::Node((*target).into()),
         }
     }
 }
@@ -658,9 +693,9 @@ impl From<loro::CounterSpan> for CounterSpan {
 impl From<ExportMode> for loro::ExportMode<'_> {
     fn from(value: ExportMode) -> Self {
         match value {
-            ExportMode::Snapshot => loro::ExportMode::Snapshot,
-            ExportMode::Updates { from } => loro::ExportMode::Updates {
-                from: Cow::Owned(from.into()),
+            ExportMode::Snapshot {} => loro::ExportMode::Snapshot,
+            ExportMode::Updates { from_ } => loro::ExportMode::Updates {
+                from: Cow::Owned(from_.into()),
             },
             ExportMode::UpdatesInRange { spans } => loro::ExportMode::UpdatesInRange {
                 spans: Cow::Owned(spans.into_iter().map(|s| s.into()).collect()),
@@ -807,7 +842,7 @@ impl From<ExpandType> for loro::ExpandType {
             ExpandType::Before => loro::ExpandType::Before,
             ExpandType::After => loro::ExpandType::After,
             ExpandType::Both => loro::ExpandType::Both,
-            ExpandType::None => loro::ExpandType::None,
+            ExpandType::Null => loro::ExpandType::None,
         }
     }
 }
@@ -818,7 +853,7 @@ impl From<loro::ExpandType> for ExpandType {
             loro::ExpandType::Before => ExpandType::Before,
             loro::ExpandType::After => ExpandType::After,
             loro::ExpandType::Both => ExpandType::Both,
-            loro::ExpandType::None => ExpandType::None,
+            loro::ExpandType::None => ExpandType::Null,
         }
     }
 }
