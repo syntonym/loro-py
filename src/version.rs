@@ -178,7 +178,7 @@ impl From<loro::VersionRange> for VersionRange {
     }
 }
 
-#[pyclass]
+#[pyclass(str)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VersionVector(loro::VersionVector);
 
