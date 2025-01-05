@@ -1,12 +1,12 @@
 [package]
 name = "loro_py"
-version = "1.2.5-alpha"
+version = "1.2.5-beta"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "loro"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 loro = { git = "https://github.com/loro-dev/loro.git", tag = "loro-crdt@1.2.5", features = [
