@@ -9,7 +9,6 @@ use pyo3::{
     prelude::*,
     types::{PyBytes, PyDict, PyInt, PyTuple, PyType},
 };
-use pyo3_stub_gen::derive::*;
 use std::{borrow::Cow, collections::HashMap, fmt::Display};
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -19,7 +18,6 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-#[gen_stub_pyclass]
 #[pyclass(str)]
 #[derive(Debug, Clone, Default)]
 pub struct Frontiers(loro::Frontiers);
@@ -30,7 +28,6 @@ impl Display for Frontiers {
     }
 }
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl Frontiers {
     #[new]
@@ -80,12 +77,10 @@ impl From<&Frontiers> for loro::Frontiers {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(str)]
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct VersionRange(loro::VersionRange);
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl VersionRange {
     #[new]
@@ -182,12 +177,10 @@ impl From<loro::VersionRange> for VersionRange {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(str)]
 #[derive(Debug, Clone)]
 pub struct VersionVector(loro::VersionVector);
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl VersionVector {
     #[new]
@@ -354,7 +347,6 @@ impl From<loro::VersionVector> for VersionVector {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(str, get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct VersionVectorDiff {

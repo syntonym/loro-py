@@ -4,7 +4,6 @@ use pyo3::{
     prelude::*,
     types::{PyBytes, PyType},
 };
-use pyo3_stub_gen::derive::*;
 use std::{borrow::Cow, collections::HashSet, fmt::Display, ops::ControlFlow, sync::Arc};
 
 use crate::{
@@ -34,7 +33,6 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-#[gen_stub_pyclass]
 #[pyclass(frozen)]
 pub struct LoroDoc {
     pub(crate) doc: LoroDocInner,
@@ -47,7 +45,6 @@ impl Default for LoroDoc {
     }
 }
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl LoroDoc {
     /// Create a new `LoroDoc` instance.
@@ -869,13 +866,11 @@ impl LoroDoc {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(frozen)]
 pub struct Configure(pub loro::Configure);
 
 // TODO: Implement the methods for Configure
 
-#[gen_stub_pyclass]
 #[pyclass(get_all, set_all, str)]
 #[derive(Debug)]
 pub struct ImportStatus {
@@ -899,7 +894,6 @@ impl Display for ImportStatus {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(get_all, str)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PosQueryResult {
@@ -913,7 +907,6 @@ impl Display for PosQueryResult {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(get_all, str)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AbsolutePosition {
@@ -928,7 +921,6 @@ impl Display for AbsolutePosition {
     }
 }
 
-#[gen_stub_pyclass_enum]
 #[pyclass]
 #[derive(Debug, Clone)]
 pub enum ExportMode {
@@ -942,7 +934,6 @@ pub enum ExportMode {
 
 /// This struct supports reverse repr: [CounterSpan]'s from can be less than to. But we should use it conservatively.
 /// We need this because it'll make merging deletions easier.
-#[gen_stub_pyclass]
 #[pyclass(get_all, str)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IdSpan {
@@ -956,7 +947,6 @@ impl Display for IdSpan {
     }
 }
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl IdSpan {
     #[new]
@@ -970,7 +960,6 @@ impl IdSpan {
 ///
 /// But we should use it behavior conservatively.
 /// If it is not necessary to be reverse, it should not.
-#[gen_stub_pyclass]
 #[pyclass(get_all, str)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CounterSpan {
@@ -978,7 +967,6 @@ pub struct CounterSpan {
     pub end: Counter,
 }
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl CounterSpan {
     #[new]
@@ -993,7 +981,6 @@ impl Display for CounterSpan {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(get_all, str)]
 #[derive(Debug, Clone)]
 pub struct ChangeMeta {
@@ -1018,7 +1005,6 @@ impl Display for ChangeMeta {
     }
 }
 
-#[gen_stub_pyclass]
 #[pyclass(get_all, str)]
 #[derive(Debug, Clone)]
 pub struct ImportBlobMetadata {
@@ -1047,7 +1033,6 @@ impl Display for ImportBlobMetadata {
     }
 }
 
-#[gen_stub_pyclass_enum]
 #[pyclass(eq, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EncodedBlobMode {
@@ -1058,12 +1043,10 @@ pub enum EncodedBlobMode {
     Updates,
 }
 
-#[gen_stub_pyclass]
 #[pyclass(str)]
 #[derive(Debug, Clone, Default)]
 pub struct StyleConfigMap(loro::StyleConfigMap);
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl StyleConfigMap {
     #[new]
@@ -1106,7 +1089,6 @@ impl Display for StyleConfigMap {
 /// - After: when inserting new text after this style, the new text should inherit this style.
 /// - Both: when inserting new text before or after this style, the new text should inherit this style.
 /// - Null: when inserting new text before or after this style, the new text should **not** inherit this style.
-#[gen_stub_pyclass_enum]
 #[pyclass(eq, eq_int)]
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
 pub enum ExpandType {

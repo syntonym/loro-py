@@ -1,6 +1,5 @@
 use loro::LoroTree as LoroTreeInner;
 use pyo3::prelude::*;
-use pyo3_stub_gen::derive::*;
 
 use crate::{
     err::PyLoroResult,
@@ -15,12 +14,10 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-#[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Debug, Clone, Default)]
 pub struct LoroTree(pub LoroTreeInner);
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl LoroTree {
     /// Create a new container that is detached from the document.
@@ -332,7 +329,6 @@ impl LoroTree {
 }
 
 /// A tree node in the [LoroTree].
-#[gen_stub_pyclass]
 #[pyclass(str, get_all, set_all)]
 #[derive(Debug, Clone)]
 pub struct TreeNode {

@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3_stub_gen::derive::*;
 
 use crate::{
     container::Cursor,
@@ -15,11 +14,9 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-#[gen_stub_pyclass]
 #[pyclass]
 pub struct UndoManager(loro::UndoManager);
 
-#[gen_stub_pymethods]
 #[pymethods]
 impl UndoManager {
     /// Create a new UndoManager.
@@ -118,7 +115,6 @@ impl UndoManager {
     }
 }
 
-#[gen_stub_pyclass_enum]
 #[pyclass(eq, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UndoOrRedo {
@@ -126,7 +122,6 @@ pub enum UndoOrRedo {
     Redo,
 }
 
-#[gen_stub_pyclass]
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct UndoItemMeta {
@@ -134,7 +129,6 @@ pub struct UndoItemMeta {
     pub cursors: Vec<CursorWithPos>,
 }
 
-#[gen_stub_pyclass]
 #[pyclass(get_all)]
 #[derive(Debug, Clone)]
 pub struct CursorWithPos {

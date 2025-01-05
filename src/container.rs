@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3_stub_gen::derive::*;
 
 mod counter;
 mod list;
@@ -16,7 +15,6 @@ pub use text::{Cursor, LoroText, Side, UpdateOptions};
 pub use tree::{LoroTree, TreeNode};
 pub use unknown::LoroUnknown;
 
-#[gen_stub_pyclass_enum]
 #[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 pub enum Container {
     List(LoroList),
