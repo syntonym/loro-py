@@ -24,7 +24,7 @@ our [Discord](https://discord.gg/tUsBSVfqzf) community.
 ## Installation
 
 ```shell
-pip install loro==1.2.5a0
+pip install loro==1.2.5b0
 ```
 
 ## Quick Start
