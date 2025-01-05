@@ -5,9 +5,8 @@ use crate::{
 };
 use loro::{Counter, PeerID};
 use pyo3::{
-    exceptions::PyValueError,
     prelude::*,
-    types::{PyBytes, PyDict, PyInt, PyTuple, PyType},
+    types::{PyBytes, PyDict, PyType},
 };
 use std::{borrow::Cow, collections::HashMap, fmt::Display};
 
@@ -245,7 +244,7 @@ impl VersionVector {
 
     #[inline]
     pub fn get_last(&self, client_id: PeerID) -> Option<Counter> {
-        self.0.get_last(client_id).map(|x| x.into())
+        self.0.get_last(client_id)
     }
 
     /// set the exclusive ending point. target id will NOT be included by self

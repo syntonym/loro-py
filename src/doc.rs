@@ -373,7 +373,7 @@ impl LoroDoc {
         bytes: Bound<'_, PyBytes>,
         origin: &str,
     ) -> PyLoroResult<ImportStatus> {
-        let status = self.doc.import_with(&bytes.as_bytes(), origin)?;
+        let status = self.doc.import_with(bytes.as_bytes(), origin)?;
         Ok(ImportStatus::from(status))
     }
 

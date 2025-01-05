@@ -1,6 +1,6 @@
 use crate::value::{ContainerID, LoroValue, TreeID, TreeParentId, ValueOrContainer};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyTuple, PyType};
+use pyo3::types::{PyDict, PyTuple};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Mutex;
