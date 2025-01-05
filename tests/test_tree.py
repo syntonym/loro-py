@@ -1,8 +1,8 @@
-from loro import LoroDoc
+from loro import LoroDoc, TreeParentId
 
 def test_tree():
     doc = LoroDoc()
     tree = doc.get_tree("tree")
     root = tree.create()
-    child = tree.create(root)
-    assert tree.children(root) == [child]
+    child = tree.create(TreeParentId.Node(root))
+    assert tree.children(TreeParentId.Node(root)) == [child]

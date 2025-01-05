@@ -13,6 +13,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ContainerID>()?;
     m.add_class::<Ordering>()?;
     m.add_class::<TreeID>()?;
+    m.add_class::<TreeParentId>()?;
     Ok(())
 }
 
@@ -121,38 +122,8 @@ pub enum TreeParentId {
     Unexist {},
 }
 
-// impl<'py> FromPyObject<'py> for TreeParentId {
-//     fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-//         if ob.is_instance_of::<TreeID>() {
-//             Ok(TreeParentId::Node(ob.extract::<TreeID>()?))
-//         } else if ob.is_none() {
-//             Ok(TreeParentId::Root)
-//         } else {
-//             Err(PyValueError::new_err("Invalid tree parent id"))
-//         }
-//     }
-// }
-
-// impl<'py> IntoPyObject<'py> for TreeParentId {
-//     type Target = PyAny;
-
-//     type Output = Bound<'py, PyAny>;
-
-//     type Error = PyErr;
-
-//     fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-//         let ans = match self {
-//             TreeParentId::Node(id) => id.into_pyobject(py)?.into_any().into_bound(),
-//             TreeParentId::Root => py.None().into_pyobject(py)?.into_any().into_bound(),
-//             TreeParentId::Deleted | TreeParentId::Unexist => {
-//                 return Err(PyValueError::new_err("Invalid tree parent id"))
-//             }
-//         };
-//         Ok(ans)
-//     }
-// }
-
-#[derive(Debug, Clone, FromPyObject, IntoPyObject)]
+#[pyclass]
+#[derive(Debug, Clone)]
 pub enum ValueOrContainer {
     Value { value: LoroValue },
     Container { container: Container },

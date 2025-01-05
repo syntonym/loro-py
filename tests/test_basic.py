@@ -3,6 +3,9 @@ from loro import LoroDoc, ExportMode, VersionVector
 def test_basic():
     doc = LoroDoc()
     doc.export(ExportMode.Snapshot())
+    j = doc.export_json_updates(VersionVector(), VersionVector())
+    doc.import_json_updates(j)
+    print(j)
     text = doc.get_text("text")
     text.insert(0, "abc")
     doc.commit()
@@ -14,7 +17,7 @@ def test_version_vector():
     text = doc1.get_text("text")
     text.insert(0, "abc")
 
-    snapshot = doc1.export({"mode": "snapshot"})
+    snapshot = doc1.export(ExportMode.Snapshot())
     doc2 = LoroDoc()
     assert doc1.state_vv != doc2.state_vv
 
