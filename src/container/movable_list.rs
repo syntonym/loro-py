@@ -4,13 +4,16 @@ use crate::{
 };
 use loro::{LoroMovableList as LoroMovableListInner, PeerID};
 use pyo3::prelude::*;
+use pyo3_stub_gen::derive::*;
 
 use super::{Container, Cursor, Side};
 
+#[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Debug, Clone, Default)]
 pub struct LoroMovableList(pub LoroMovableListInner);
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl LoroMovableList {
     /// Create a new container that is detached from the document.
@@ -60,8 +63,6 @@ impl LoroMovableList {
     }
 
     /// Whether the list is empty.
-    #[must_use]
-    #[getter]
     pub fn is_empty(&self) -> bool {
         self.__len__() == 0
     }
@@ -105,8 +106,8 @@ impl LoroMovableList {
     }
 
     /// Move the value at the given position to the given position.
-    pub fn mov(&self, from: usize, to: usize) -> PyLoroResult<()> {
-        self.0.mov(from, to)?;
+    pub fn mov(&self, from_: usize, to: usize) -> PyLoroResult<()> {
+        self.0.mov(from_, to)?;
         Ok(())
     }
 

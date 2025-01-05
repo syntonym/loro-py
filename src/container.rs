@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use pyo3_stub_gen::derive::*;
 
 mod counter;
 mod list;
@@ -15,6 +16,7 @@ pub use text::{Cursor, LoroText, Side, UpdateOptions};
 pub use tree::{LoroTree, TreeNode};
 pub use unknown::LoroUnknown;
 
+#[gen_stub_pyclass_enum]
 #[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 pub enum Container {
     List(LoroList),
@@ -29,8 +31,8 @@ pub enum Container {
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     text::register_class(m)?;
     map::register_class(m)?;
+    tree::register_class(m)?;
     m.add_class::<LoroList>()?;
-    m.add_class::<LoroTree>()?;
     m.add_class::<LoroMovableList>()?;
     m.add_class::<LoroCounter>()?;
     m.add_class::<LoroUnknown>()?;

@@ -1,5 +1,6 @@
 use loro::{Counter, PeerID};
-use pyo3::{exceptions::PyValueError, prelude::*, BoundObject};
+use pyo3::prelude::*;
+use pyo3_stub_gen::derive::*;
 use std::fmt::Display;
 
 use crate::{
@@ -16,6 +17,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+#[gen_stub_pyclass]
 #[pyclass(eq, str, get_all, set_all)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ID {
@@ -29,6 +31,7 @@ impl Display for ID {
     }
 }
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl ID {
     #[new]
@@ -37,6 +40,7 @@ impl ID {
     }
 }
 
+#[gen_stub_pyclass_enum]
 #[pyclass(eq, hash, str)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ContainerType {
@@ -55,6 +59,7 @@ impl Display for ContainerType {
     }
 }
 
+#[gen_stub_pyclass_enum]
 #[pyclass(eq, str, hash)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ContainerID {
@@ -75,6 +80,7 @@ impl Display for ContainerID {
     }
 }
 
+#[gen_stub_pyclass_enum]
 #[pyclass(eq, str, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ordering {
@@ -99,6 +105,7 @@ impl From<std::cmp::Ordering> for Ordering {
     }
 }
 
+#[gen_stub_pyclass]
 #[pyclass(eq, str, get_all, set_all)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TreeID {
@@ -112,49 +119,52 @@ impl Display for TreeID {
     }
 }
 
+#[gen_stub_pyclass_enum]
+#[pyclass]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TreeParentId {
-    Node(TreeID),
-    Root,
-    Deleted,
-    Unexist,
+    Node { node: TreeID },
+    Root {},
+    Deleted {},
+    Unexist {},
 }
 
-impl<'py> FromPyObject<'py> for TreeParentId {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-        if ob.is_instance_of::<TreeID>() {
-            Ok(TreeParentId::Node(ob.extract::<TreeID>()?))
-        } else if ob.is_none() {
-            Ok(TreeParentId::Root)
-        } else {
-            Err(PyValueError::new_err("Invalid tree parent id"))
-        }
-    }
-}
+// impl<'py> FromPyObject<'py> for TreeParentId {
+//     fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+//         if ob.is_instance_of::<TreeID>() {
+//             Ok(TreeParentId::Node(ob.extract::<TreeID>()?))
+//         } else if ob.is_none() {
+//             Ok(TreeParentId::Root)
+//         } else {
+//             Err(PyValueError::new_err("Invalid tree parent id"))
+//         }
+//     }
+// }
 
-impl<'py> IntoPyObject<'py> for TreeParentId {
-    type Target = PyAny;
+// impl<'py> IntoPyObject<'py> for TreeParentId {
+//     type Target = PyAny;
 
-    type Output = Bound<'py, PyAny>;
+//     type Output = Bound<'py, PyAny>;
 
-    type Error = PyErr;
+//     type Error = PyErr;
 
-    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-        let ans = match self {
-            TreeParentId::Node(id) => id.into_pyobject(py)?.into_any().into_bound(),
-            TreeParentId::Root => py.None().into_pyobject(py)?.into_any().into_bound(),
-            TreeParentId::Deleted | TreeParentId::Unexist => {
-                return Err(PyValueError::new_err("Invalid tree parent id"))
-            }
-        };
-        Ok(ans)
-    }
-}
+//     fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+//         let ans = match self {
+//             TreeParentId::Node(id) => id.into_pyobject(py)?.into_any().into_bound(),
+//             TreeParentId::Root => py.None().into_pyobject(py)?.into_any().into_bound(),
+//             TreeParentId::Deleted | TreeParentId::Unexist => {
+//                 return Err(PyValueError::new_err("Invalid tree parent id"))
+//             }
+//         };
+//         Ok(ans)
+//     }
+// }
 
+#[gen_stub_pyclass_enum]
 #[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 pub enum ValueOrContainer {
-    Value(LoroValue),
-    Container(Container),
+    Value { value: LoroValue },
+    Container { container: Container },
 }
 
 impl Display for ValueOrContainer {
@@ -163,6 +173,7 @@ impl Display for ValueOrContainer {
     }
 }
 
+#[gen_stub_pyclass]
 #[derive(Debug, Clone)]
 pub struct LoroValue(pub(crate) loro::LoroValue);
 

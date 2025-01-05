@@ -1,5 +1,6 @@
 use loro::{LoroText as LoroTextInner, PeerID};
 use pyo3::{exceptions::PyValueError, prelude::*};
+use pyo3_stub_gen::derive::*;
 use std::fmt::Display;
 
 use crate::{
@@ -16,10 +17,12 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+#[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Debug, Clone, Default)]
 pub struct LoroText(pub LoroTextInner);
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl LoroText {
     /// Create a new container that is detached from the document.
@@ -100,7 +103,6 @@ impl LoroText {
     }
 
     /// Whether the text container is empty.
-    #[getter]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -298,6 +300,7 @@ impl LoroText {
 ///
 /// - `timeout_ms`: Optional timeout in milliseconds for the diff computation
 /// - `use_refined_diff`: Whether to use a more refined but slower diff algorithm. Defaults to true.
+#[gen_stub_pyclass]
 #[pyclass(set_all, get_all, str)]
 #[derive(Clone, Debug)]
 pub struct UpdateOptions {
@@ -315,6 +318,7 @@ impl Display for UpdateOptions {
     }
 }
 
+#[gen_stub_pyclass_enum]
 #[pyclass(eq, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Side {
@@ -323,7 +327,8 @@ pub enum Side {
     Right = 1,
 }
 
-#[pyclass(str)]
+#[gen_stub_pyclass]
+#[pyclass(str, frozen)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Cursor(pub loro::cursor::Cursor);
 
@@ -337,6 +342,7 @@ impl Display for Cursor {
     }
 }
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl Cursor {
     #[getter]

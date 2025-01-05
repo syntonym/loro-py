@@ -1,5 +1,6 @@
 use loro::LoroList as LoroListInner;
 use pyo3::prelude::*;
+use pyo3_stub_gen::derive::*;
 
 use crate::{
     err::PyLoroResult,
@@ -8,10 +9,12 @@ use crate::{
 
 use super::{Container, Cursor, Side};
 
+#[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Debug, Clone, Default)]
 pub struct LoroList(pub LoroListInner);
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl LoroList {
     /// Create a new container that is detached from the document.
@@ -109,7 +112,6 @@ impl LoroList {
     }
 
     /// Whether the list is empty.
-    #[getter]
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -130,15 +132,8 @@ impl LoroList {
     /// assert_eq!(doc.get_deep_value().to_json_value(), json!({"m": ["012"]}));
     /// ```
     #[inline]
-    pub fn insert_container(
-        &self,
-        py: Python,
-        pos: usize,
-        child: PyObject,
-    ) -> PyLoroResult<Container> {
-        let container = self
-            .0
-            .insert_container(pos, loro::Container::from(child.extract::<Container>(py)?))?;
+    pub fn insert_container(&self, pos: usize, child: Container) -> PyLoroResult<Container> {
+        let container = self.0.insert_container(pos, loro::Container::from(child))?;
         Ok(container.into())
     }
 

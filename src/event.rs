@@ -1,6 +1,7 @@
 use crate::value::{ContainerID, LoroValue, TreeID, TreeParentId, ValueOrContainer};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyTuple};
+use pyo3::types::{PyDict, PyTuple, PyType};
+use pyo3_stub_gen::derive::*;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Mutex;
@@ -13,10 +14,18 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TreeDiff>()?;
     m.add_class::<TreeDiffItem>()?;
     m.add_class::<TreeExternalDiff>()?;
+    m.add_class::<DiffEvent>()?;
+    m.add_class::<TextDelta>()?;
+    m.add_class::<PathItem>()?;
+    m.add_class::<ContainerDiff>()?;
+    m.add_class::<Index>()?;
+    m.add_class::<Diff>()?;
     Ok(())
 }
 
-#[derive(Debug, IntoPyObject)]
+#[gen_stub_pyclass]
+#[pyclass(get_all, str)]
+#[derive(Debug)]
 pub struct DiffEvent {
     /// How the event is triggered.
     pub triggered_by: EventTriggerKind,
@@ -47,6 +56,7 @@ impl fmt::Display for DiffEvent {
     }
 }
 
+#[gen_stub_pyclass_enum]
 /// The kind of the event trigger.
 #[pyclass(eq, eq_int)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -69,7 +79,9 @@ impl fmt::Display for EventTriggerKind {
     }
 }
 
-#[derive(Debug, Clone, IntoPyObject)]
+#[gen_stub_pyclass]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone)]
 pub struct PathItem {
     pub container: ContainerID,
     pub index: Index,
@@ -85,7 +97,9 @@ impl fmt::Display for PathItem {
     }
 }
 
-#[derive(Debug, Clone, IntoPyObject)]
+#[gen_stub_pyclass]
+#[pyclass(get_all, str)]
+#[derive(Debug, Clone)]
 /// A diff of a container.
 pub struct ContainerDiff {
     /// The target container id of the diff.
@@ -115,43 +129,47 @@ impl fmt::Display for ContainerDiff {
     }
 }
 
-#[derive(Debug, Clone, IntoPyObject, FromPyObject)]
+#[gen_stub_pyclass_enum]
+#[pyclass(str, get_all)]
+#[derive(Debug, Clone)]
 pub enum Index {
-    Key(String),
-    Seq(u32),
-    Node(TreeID),
+    Key { key: String },
+    Seq { index: u32 },
+    Node { target: TreeID },
 }
 
 impl fmt::Display for Index {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Index::Key(key) => write!(f, "Key(key='{}')", key),
-            Index::Seq(index) => write!(f, "Seq(index={})", index),
-            Index::Node(target) => write!(f, "Node(target={})", target),
+            Index::Key { key } => write!(f, "Key(key='{}')", key),
+            Index::Seq { index } => write!(f, "Seq(index={})", index),
+            Index::Node { target } => write!(f, "Node(target={})", target),
         }
     }
 }
 
-#[derive(Debug, Clone, IntoPyObject)]
+#[gen_stub_pyclass_enum]
+#[pyclass(get_all)]
+#[derive(Debug, Clone)]
 pub enum Diff {
     /// A list diff.
-    List(Vec<ListDiffItem>),
+    List { diff: Vec<ListDiffItem> },
     /// A text diff.
-    Text(Vec<TextDelta>),
+    Text { diff: Vec<TextDelta> },
     /// A map diff.
-    Map(MapDelta),
+    Map { diff: MapDelta },
     /// A tree diff.
-    Tree(TreeDiff),
+    Tree { diff: TreeDiff },
     /// A counter diff.
-    Counter(f64),
+    Counter { diff: f64 },
     /// An unknown diff.
-    Unknown(()),
+    Unknown {},
 }
 
 impl fmt::Display for Diff {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Diff::List(diff) => write!(
+            Diff::List { diff } => write!(
                 f,
                 "List([{}])",
                 diff.iter()
@@ -159,7 +177,7 @@ impl fmt::Display for Diff {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
-            Diff::Text(diff) => write!(
+            Diff::Text { diff } => write!(
                 f,
                 "Text([{}])",
                 diff.iter()
@@ -167,15 +185,17 @@ impl fmt::Display for Diff {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
-            Diff::Map(diff) => write!(f, "Map({})", diff),
-            Diff::Tree(diff) => write!(f, "Tree({})", diff),
-            Diff::Counter(diff) => write!(f, "Counter({})", diff),
-            Diff::Unknown(()) => write!(f, "Unknown()"),
+            Diff::Map { diff } => write!(f, "Map({})", diff),
+            Diff::Tree { diff } => write!(f, "Tree({})", diff),
+            Diff::Counter { diff } => write!(f, "Counter({})", diff),
+            Diff::Unknown {} => write!(f, "Unknown"),
         }
     }
 }
 
-#[derive(Debug, Clone, IntoPyObject, FromPyObject)]
+#[gen_stub_pyclass_enum]
+#[pyclass(str, get_all)]
+#[derive(Debug, Clone)]
 pub enum TextDelta {
     Retain {
         retain: usize,
@@ -228,7 +248,8 @@ impl fmt::Display for TextDelta {
     }
 }
 
-#[pyclass]
+#[gen_stub_pyclass_enum]
+#[pyclass(str, get_all)]
 #[derive(Debug, Clone)]
 pub enum ListDiffItem {
     /// Insert a new element into the list.
@@ -277,7 +298,8 @@ impl fmt::Display for ListDiffItem {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
+#[gen_stub_pyclass]
+#[pyclass(str, get_all)]
 #[derive(Debug, Clone)]
 pub struct MapDelta {
     /// All the updated keys and their new values.
@@ -302,7 +324,8 @@ impl fmt::Display for MapDelta {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
+#[gen_stub_pyclass]
+#[pyclass(str, get_all)]
 #[derive(Debug, Clone)]
 pub struct TreeDiff {
     pub diff: Vec<TreeDiffItem>,
@@ -322,7 +345,8 @@ impl fmt::Display for TreeDiff {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
+#[gen_stub_pyclass]
+#[pyclass(str, get_all)]
 #[derive(Debug, Clone)]
 pub struct TreeDiffItem {
     pub target: TreeID,
@@ -339,7 +363,8 @@ impl fmt::Display for TreeDiffItem {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
+#[gen_stub_pyclass_enum]
+#[pyclass(str, get_all)]
 #[derive(Debug, Clone)]
 pub enum TreeExternalDiff {
     Create {
@@ -401,9 +426,11 @@ impl fmt::Display for TreeExternalDiff {
     }
 }
 
+#[gen_stub_pyclass]
 #[pyclass(frozen)]
 pub struct Subscription(pub(crate) Mutex<Option<loro::Subscription>>);
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl Subscription {
     #[pyo3(signature = (*_args, **_kwargs))]
