@@ -2012,6 +2012,7 @@ class EventTriggerKind(Enum):
     r"""
     The kind of the event trigger.
     """
+
     class Local(EventTriggerKind):
         pass
 
@@ -2030,6 +2031,7 @@ class ExpandType(Enum):
     - Both: when inserting new text before or after this style, the new text should inherit this style.
     - None: when inserting new text before or after this style, the new text should **not** inherit this style.
     """
+
     class Before(ExpandType):
         pass
 
@@ -2158,3 +2160,12 @@ class ValueOrContainer(Enum):
 
     class Container(ValueOrContainer):
         container: Container
+
+    @classmethod
+    def is_value(
+        cls, value: ValueOrContainer | None
+    ) -> typing.TypeGuard[ValueOrContainer.Value]: ...
+    @classmethod
+    def is_container(
+        cls, value: ValueOrContainer | None
+    ) -> typing.TypeGuard[ValueOrContainer.Container]: ...

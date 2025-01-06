@@ -136,6 +136,29 @@ impl Display for ValueOrContainer {
     }
 }
 
+#[pymethods]
+impl ValueOrContainer {
+    #[staticmethod]
+    #[pyo3(signature = (value=None))]
+    pub fn is_value(value: Option<&ValueOrContainer>) -> bool {
+        if value.is_none() {
+            return false;
+        }
+
+        matches!(value.unwrap(), ValueOrContainer::Value { .. })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (value=None))]
+    pub fn is_container(value: Option<&ValueOrContainer>) -> bool {
+        if value.is_none() {
+            return false;
+        }
+
+        matches!(value.unwrap(), ValueOrContainer::Container { .. })
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LoroValue(pub(crate) loro::LoroValue);
 
