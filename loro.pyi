@@ -2135,17 +2135,16 @@ class TreeExternalDiff(Enum):
 
 class TreeParentId(Enum):
     class Node(TreeParentId):
-        def __new__(cls, node: TreeID): ...
         node: TreeID
 
     class Root(TreeParentId):
-        def __new__(cls): ...
+        pass
 
     class Deleted(TreeParentId):
-        def __new__(cls): ...
+        pass
 
     class Unexist(TreeParentId):
-        def __new__(cls): ...
+        pass
 
 class UndoOrRedo(Enum):
     class Undo(UndoOrRedo):
