@@ -14,6 +14,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Ordering>()?;
     m.add_class::<TreeID>()?;
     m.add_class::<TreeParentId>()?;
+    m.add_class::<ValueOrContainer>()?;
     Ok(())
 }
 
