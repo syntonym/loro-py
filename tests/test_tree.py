@@ -6,3 +6,4 @@ def test_tree():
     root = tree.create()
     child = tree.create(TreeParentId.Node(root))
     assert tree.children(TreeParentId.Node(root)) == [child]
+    assert tree.children(TreeParentId.Root()) == [root]
