@@ -2140,14 +2140,18 @@ class TextDeltaDeleteDict(typing.TypedDict):
 class TextDelta:
     class Retain(TextDelta):
         def __init__(
-            self, retain: int, attributes: typing.Optional[dict[str, LoroValue]]
+            self,
+            retain: int,
+            attributes: typing.Optional[typing.Mapping[str, LoroValue]],
         ): ...
         retain: int
         attributes: typing.Optional[dict[str, LoroValue]]
 
     class Insert(TextDelta):
         def __init__(
-            self, insert: str, attributes: typing.Optional[dict[str, LoroValue]]
+            self,
+            insert: str,
+            attributes: typing.Optional[typing.Mapping[str, LoroValue]],
         ): ...
         insert: str
         attributes: typing.Optional[dict[str, LoroValue]]
