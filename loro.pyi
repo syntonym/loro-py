@@ -1,5 +1,4 @@
 import typing
-from enum import Enum
 
 LoroValue = typing.Union[
     None,
@@ -1322,7 +1321,7 @@ class LoroText:
         """
         ...
 
-    def to_delta(self) -> LoroValue:
+    def to_delta(self) -> list[TextDeltaDict]:
         r"""
         Get the text in [Delta](https://quilljs.com/docs/delta/) format.
 
@@ -1941,17 +1940,19 @@ class VersionRange:
     def extends_to_include_id_span(self, span: IdSpan) -> None: ...
     def inner(self) -> dict[int, tuple[int, int]]: ...
 
-class ContainerID(Enum):
+class ContainerID:
     class Root(ContainerID):
+        def __init__(self, name: str, container_type: ContainerType): ...
         name: str
         container_type: ContainerType
 
     class Normal(ContainerID):
+        def __init__(self, peer: int, counter: int, container_type: ContainerType): ...
         peer: int
         counter: int
         container_type: ContainerType
 
-class ContainerType(Enum):
+class ContainerType:
     class Text(ContainerType):
         pass
 
@@ -1971,28 +1972,34 @@ class ContainerType(Enum):
         pass
 
     class Unknown(ContainerType):
+        def __init__(self, kind: int): ...
         kind: int
 
-class Diff(Enum):
+class Diff:
     class List(Diff):
+        def __init__(self, diff: list[ListDiffItem]): ...
         diff: list[ListDiffItem]
 
     class Text(Diff):
+        def __init__(self, diff: list[TextDelta]): ...
         diff: list[TextDelta]
 
     class Map(Diff):
+        def __init__(self, diff: MapDelta): ...
         diff: MapDelta
 
     class Tree(Diff):
+        def __init__(self, diff: TreeDiff): ...
         diff: TreeDiff
 
     class Counter(Diff):
+        def __init__(self, diff: float): ...
         diff: float
 
     class Unknown(Diff):
         pass
 
-class EncodedBlobMode(Enum):
+class EncodedBlobMode:
     class Snapshot(EncodedBlobMode):
         pass
 
@@ -2008,7 +2015,7 @@ class EncodedBlobMode(Enum):
     class Updates(EncodedBlobMode):
         pass
 
-class EventTriggerKind(Enum):
+class EventTriggerKind:
     r"""
     The kind of the event trigger.
     """
@@ -2022,7 +2029,7 @@ class EventTriggerKind(Enum):
     class Checkout(EventTriggerKind):
         pass
 
-class ExpandType(Enum):
+class ExpandType:
     r"""
     Whether to expand the style when inserting new text around it.
 
@@ -2044,47 +2051,58 @@ class ExpandType(Enum):
     class Null(ExpandType):
         pass
 
-class ExportMode(Enum):
+class ExportMode:
     class Snapshot(ExportMode):
         pass
 
     class Updates(ExportMode):
+        def __init__(self, from_: VersionVector): ...
         from_: VersionVector
 
     class UpdatesInRange(ExportMode):
+        def __init__(self, spans: list[IdSpan]): ...
         spans: list[IdSpan]
 
     class ShallowSnapshot(ExportMode):
+        def __init__(self, frontiers: Frontiers): ...
         frontiers: Frontiers
 
     class StateOnly(ExportMode):
+        def __init__(self, frontiers: typing.Optional[Frontiers]): ...
         frontiers: typing.Optional[Frontiers]
 
     class SnapshotAt(ExportMode):
+        def __init__(self, version: Frontiers): ...
         version: Frontiers
 
-class Index(Enum):
+class Index:
     class Key(Index):
+        def __init__(self, key: str): ...
         key: str
 
     class Seq(Index):
+        def __init__(self, index: int): ...
         index: int
 
     class Node(Index):
+        def __init__(self, target: TreeID): ...
         target: TreeID
 
-class ListDiffItem(Enum):
+class ListDiffItem:
     class Insert(ListDiffItem):
+        def __init__(self, insert: list[ValueOrContainer], is_move: bool): ...
         insert: list[ValueOrContainer]
         is_move: bool
 
     class Delete(ListDiffItem):
+        def __init__(self, delete: int): ...
         delete: int
 
     class Retain(ListDiffItem):
+        def __init__(self, retain: int): ...
         retain: int
 
-class Ordering(Enum):
+class Ordering:
     class Less(Ordering):
         pass
 
@@ -2094,7 +2112,7 @@ class Ordering(Enum):
     class Greater(Ordering):
         pass
 
-class Side(Enum):
+class Side:
     class Left(Side):
         pass
 
@@ -2104,25 +2122,56 @@ class Side(Enum):
     class Right(Side):
         pass
 
-class TextDelta(Enum):
+TextDeltaDict = typing.Union[
+    TextDeltaInsertDict, TextDeltaRetainDict, TextDeltaDeleteDict
+]
+
+class TextDeltaInsertDict(typing.TypedDict):
+    insert: str
+    attributes: typing.Optional[dict[str, LoroValue]]
+
+class TextDeltaRetainDict(typing.TypedDict):
+    retain: int
+    attributes: typing.Optional[dict[str, LoroValue]]
+
+class TextDeltaDeleteDict(typing.TypedDict):
+    delete: int
+
+class TextDelta:
     class Retain(TextDelta):
+        def __init__(
+            self, retain: int, attributes: typing.Optional[dict[str, LoroValue]]
+        ): ...
         retain: int
         attributes: typing.Optional[dict[str, LoroValue]]
 
     class Insert(TextDelta):
+        def __init__(
+            self, insert: str, attributes: typing.Optional[dict[str, LoroValue]]
+        ): ...
         insert: str
         attributes: typing.Optional[dict[str, LoroValue]]
 
     class Delete(TextDelta):
+        def __init__(self, delete: int): ...
         delete: int
 
-class TreeExternalDiff(Enum):
+class TreeExternalDiff:
     class Create(TreeExternalDiff):
+        def __init__(self, parent: TreeParentId, index: int, fractional_index: str): ...
         parent: TreeParentId
         index: int
         fractional_index: str
 
     class Move(TreeExternalDiff):
+        def __init__(
+            self,
+            parent: TreeParentId,
+            index: int,
+            fractional_index: str,
+            old_parent: TreeParentId,
+            old_index: int,
+        ): ...
         parent: TreeParentId
         index: int
         fractional_index: str
@@ -2130,11 +2179,13 @@ class TreeExternalDiff(Enum):
         old_index: int
 
     class Delete(TreeExternalDiff):
+        def __init__(self, old_parent: TreeParentId, old_index: int): ...
         old_parent: TreeParentId
         old_index: int
 
-class TreeParentId(Enum):
+class TreeParentId:
     class Node(TreeParentId):
+        def __init__(self, node: TreeID): ...
         node: TreeID
 
     class Root(TreeParentId):
@@ -2146,18 +2197,20 @@ class TreeParentId(Enum):
     class Unexist(TreeParentId):
         pass
 
-class UndoOrRedo(Enum):
+class UndoOrRedo:
     class Undo(UndoOrRedo):
         pass
 
     class Redo(UndoOrRedo):
         pass
 
-class ValueOrContainer(Enum):
+class ValueOrContainer:
     class Value(ValueOrContainer):
+        def __init__(self, value: LoroValue): ...
         value: LoroValue
 
     class Container(ValueOrContainer):
+        def __init__(self, container: Container): ...
         container: Container
 
     @classmethod
