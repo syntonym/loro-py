@@ -9,11 +9,11 @@ name = "loro"
 crate-type = ["cdylib"]
 
 [dependencies]
-loro = { git = "https://github.com/loro-dev/loro.git", tag = "loro-crdt@1.2.5", features = [
+loro = { git = "https://github.com/loro-dev/loro.git", branch = "main", features = [
     "counter",
     "jsonpath",
 ] }
-loro-internal = { git = "https://github.com/loro-dev/loro.git", tag = "loro-crdt@1.2.5", features = [
+loro-internal = { git = "https://github.com/loro-dev/loro.git", branch = "main", features = [
     "counter",
     "jsonpath",
 ] }

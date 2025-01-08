@@ -205,7 +205,7 @@ impl LoroText {
         Ok(())
     }
 
-    /// Get the text in [Delta](https://quilljs.com/docs/delta/) format.
+    /// Get the rich text value of the text container.
     ///
     /// # Example
     /// ```
@@ -217,7 +217,7 @@ impl LoroText {
     /// text.insert(0, "Hello world!").unwrap();
     /// text.mark(0..5, "bold", true).unwrap();
     /// assert_eq!(
-    ///     text.to_delta().to_json_value(),
+    ///     text.get_richtext_value().to_json_value(),
     ///     json!([
     ///         { "insert": "Hello", "attributes": {"bold": true} },
     ///         { "insert": " world!" },
@@ -225,15 +225,20 @@ impl LoroText {
     /// );
     /// text.unmark(3..5, "bold").unwrap();
     /// assert_eq!(
-    ///     text.to_delta().to_json_value(),
+    ///     text.get_richtext_value().to_json_value(),
     ///     json!([
     ///         { "insert": "Hel", "attributes": {"bold": true} },
     ///         { "insert": "lo world!" },
     ///    ])
     /// );
     /// ```
-    pub fn to_delta(&self) -> LoroValue {
-        self.0.to_delta().into()
+    pub fn get_richtext_value(&self) -> LoroValue {
+        self.0.get_richtext_value().into()
+    }
+
+    /// Get the text in [Delta](https://quilljs.com/docs/delta/) format.
+    pub fn to_delta(&self) -> Vec<TextDelta> {
+        self.0.to_delta().iter().map(|x| x.into()).collect()
     }
 
     /// Get the text content of the text container.

@@ -78,7 +78,7 @@ impl UndoManager {
                             (
                                 UndoOrRedo::from(undo_or_redo),
                                 CounterSpan::from(span),
-                                event.map(|x| DiffEvent::from(loro::event::DiffEvent::from(x))),
+                                event.map(DiffEvent::from),
                             ),
                         )
                         .unwrap()

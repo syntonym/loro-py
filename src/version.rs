@@ -358,11 +358,11 @@ impl From<loro::VersionVector> for VersionVector {
     }
 }
 
-#[pyclass(str, get_all, set_all)]
+#[pyclass(str, get_all)]
 #[derive(Debug, Clone)]
 pub struct VersionVectorDiff {
-    pub left: VersionRange,
-    pub right: VersionRange,
+    pub retreat: VersionRange,
+    pub forward: VersionRange,
 }
 
 impl Display for VersionVectorDiff {
@@ -375,16 +375,16 @@ impl From<loro::VersionVectorDiff> for VersionVectorDiff {
     // TODO: a better way in loro-rs
     fn from(value: loro::VersionVectorDiff) -> Self {
         Self {
-            left: VersionRange(loro::VersionRange::from_map(
+            retreat: VersionRange(loro::VersionRange::from_map(
                 value
-                    .left
+                    .retreat
                     .iter()
                     .map(|(k, v)| (*k, (v.start, v.end)))
                     .collect(),
             )),
-            right: VersionRange(loro::VersionRange::from_map(
+            forward: VersionRange(loro::VersionRange::from_map(
                 value
-                    .right
+                    .forward
                     .iter()
                     .map(|(k, v)| (*k, (v.start, v.end)))
                     .collect(),

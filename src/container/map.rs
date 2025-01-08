@@ -45,23 +45,7 @@ impl LoroMap {
     pub fn for_each(&self, f: PyObject) {
         Python::with_gil(|py| {
             self.0.for_each(move |key, value| {
-                f.call1(
-                    py,
-                    (
-                        key,
-                        match value {
-                            loro_internal::handler::ValueOrHandler::Value(v) => {
-                                ValueOrContainer::Value { value: v.into() }
-                            }
-                            loro_internal::handler::ValueOrHandler::Handler(h) => {
-                                ValueOrContainer::Container {
-                                    container: loro::Container::from(h).into(),
-                                }
-                            }
-                        },
-                    ),
-                )
-                .unwrap();
+                f.call1(py, (key, ValueOrContainer::from(value))).unwrap();
             })
         });
     }

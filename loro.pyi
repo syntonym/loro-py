@@ -1321,35 +1321,15 @@ class LoroText:
         """
         ...
 
-    def to_delta(self) -> list[TextDeltaDict]:
+    def to_delta(self) -> list[TextDelta]:
         r"""
         Get the text in [Delta](https://quilljs.com/docs/delta/) format.
+        """
+        ...
 
-        # Example
-        ```
-        # use loro::{LoroDoc, ToJson, ExpandType};
-        # use serde_json::json;
-
-        let doc = LoroDoc::new();
-        let text = doc.get_text("text");
-        text.insert(0, "Hello world!").unwrap();
-        text.mark(0..5, "bold", true).unwrap();
-        assert_eq!(
-            text.to_delta().to_json_value(),
-            json!([
-                { "insert": "Hello", "attributes": {"bold": true} },
-                { "insert": " world!" },
-            ])
-        );
-        text.unmark(3..5, "bold").unwrap();
-        assert_eq!(
-            text.to_delta().to_json_value(),
-            json!([
-                { "insert": "Hel", "attributes": {"bold": true} },
-                { "insert": "lo world!" },
-           ])
-        );
-        ```
+    def get_richtext_value(self) -> LoroValue:
+        r"""
+        Get the rich text value of the text container.
         """
         ...
 
@@ -1923,8 +1903,8 @@ class VersionVector:
     def decode(cls, bytes: bytes) -> VersionVector: ...
 
 class VersionVectorDiff:
-    left: VersionRange
-    right: VersionRange
+    retreat: VersionRange
+    forward: VersionRange
 
 class VersionRange:
     is_empty: bool
@@ -2128,21 +2108,6 @@ class Side:
 
     class Right(Side):
         pass
-
-TextDeltaDict = typing.Union[
-    TextDeltaInsertDict, TextDeltaRetainDict, TextDeltaDeleteDict
-]
-
-class TextDeltaInsertDict(typing.TypedDict):
-    insert: str
-    attributes: typing.Optional[dict[str, LoroValue]]
-
-class TextDeltaRetainDict(typing.TypedDict):
-    retain: int
-    attributes: typing.Optional[dict[str, LoroValue]]
-
-class TextDeltaDeleteDict(typing.TypedDict):
-    delete: int
 
 class TextDelta:
     class Retain(TextDelta):

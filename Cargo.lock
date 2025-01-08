@@ -395,8 +395,8 @@ dependencies = [
 
 [[package]]
 name = "loro"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "enum-as-inner 0.6.1",
  "fxhash",
@@ -410,8 +410,8 @@ dependencies = [
 
 [[package]]
 name = "loro-common"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "arbitrary",
  "enum-as-inner 0.6.1",
@@ -427,8 +427,8 @@ dependencies = [
 
 [[package]]
 name = "loro-delta"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "arrayvec",
  "enum-as-inner 0.5.1",
@@ -438,8 +438,8 @@ dependencies = [
 
 [[package]]
 name = "loro-internal"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "append-only-bytes",
  "arref",
@@ -478,8 +478,8 @@ dependencies = [
 
 [[package]]
 name = "loro-kv-store"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "bytes",
  "ensure-cov",
@@ -494,8 +494,8 @@ dependencies = [
 
 [[package]]
 name = "loro-rle"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "append-only-bytes",
  "num",
@@ -510,8 +510,8 @@ checksum = "3f3d053a135388e6b1df14e8af1212af5064746e9b87a06a345a7a779ee9695a"
 
 [[package]]
 name = "loro_fractional_index"
-version = "1.1.0"
-source = "git+https://github.com/loro-dev/loro.git?tag=loro-crdt%401.2.5#5a85e6e5d2309c5460471ae62d30cb0cf02685a3"
+version = "1.2.7"
+source = "git+https://github.com/loro-dev/loro.git?branch=main#763ab04797081ada8d0ae6de144b5422be90d093"
 dependencies = [
  "once_cell",
  "rand",
