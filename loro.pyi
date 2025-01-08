@@ -2168,10 +2168,10 @@ class TreeExternalDiff:
     class Move(TreeExternalDiff):
         def __init__(
             self,
-            parent: TreeParentId,
+            parent: typing.Optional[TreeID],
             index: int,
             fractional_index: str,
-            old_parent: TreeParentId,
+            old_parent: typing.Optional[TreeID],
             old_index: int,
         ): ...
         parent: typing.Optional[TreeID]
@@ -2181,7 +2181,7 @@ class TreeExternalDiff:
         old_index: int
 
     class Delete(TreeExternalDiff):
-        def __init__(self, old_parent: TreeParentId, old_index: int): ...
+        def __init__(self, old_parent: typing.Optional[TreeID], old_index: int): ...
         old_parent: typing.Optional[TreeID]
         old_index: int
 
