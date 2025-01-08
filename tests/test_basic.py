@@ -5,7 +5,6 @@ def test_basic():
     doc.export(ExportMode.Snapshot())
     j = doc.export_json_updates(VersionVector(), VersionVector())
     doc.import_json_updates(j)
-    print(j)
     text = doc.get_text("text")
     text.insert(0, "abc")
     doc.commit()

@@ -14,6 +14,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Ordering>()?;
     m.add_class::<TreeID>()?;
     m.add_class::<TreeParentId>()?;
+    m.add_class::<ValueOrContainer>()?;
     Ok(())
 }
 
@@ -132,6 +133,29 @@ pub enum ValueOrContainer {
 impl Display for ValueOrContainer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+#[pymethods]
+impl ValueOrContainer {
+    #[staticmethod]
+    #[pyo3(signature = (value=None))]
+    pub fn is_value(value: Option<&ValueOrContainer>) -> bool {
+        if value.is_none() {
+            return false;
+        }
+
+        matches!(value.unwrap(), ValueOrContainer::Value { .. })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (value=None))]
+    pub fn is_container(value: Option<&ValueOrContainer>) -> bool {
+        if value.is_none() {
+            return false;
+        }
+
+        matches!(value.unwrap(), ValueOrContainer::Container { .. })
     }
 }
 
