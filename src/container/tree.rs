@@ -2,6 +2,7 @@ use loro::LoroTree as LoroTreeInner;
 use pyo3::prelude::*;
 
 use crate::{
+    convert::tree_parent_id_to_option_tree_id,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, TreeID, TreeParentId, ID},
 };
@@ -55,9 +56,9 @@ impl LoroTree {
     /// // create a new child
     /// let child = tree.create(root).unwrap();
     /// ```
-    #[pyo3(signature = (parent=TreeParentId::Root {}))]
-    pub fn create(&self, parent: TreeParentId) -> PyLoroResult<TreeID> {
-        let ans = self.0.create(parent)?.into();
+    #[pyo3(signature = (parent=None))]
+    pub fn create(&self, parent: Option<TreeID>) -> PyLoroResult<TreeID> {
+        let ans = self.0.create(parent.map(loro::TreeID::from))?.into();
         Ok(ans)
     }
 
@@ -86,8 +87,12 @@ impl LoroTree {
     /// // create a new child at index 0
     /// let child = tree.create_at(root, 0).unwrap();
     /// ```
-    pub fn create_at(&self, parent: TreeParentId, index: usize) -> PyLoroResult<TreeID> {
-        let ans = self.0.create_at(parent, index)?.into();
+    #[pyo3(signature = (index, parent=None))]
+    pub fn create_at(&self, index: usize, parent: Option<TreeID>) -> PyLoroResult<TreeID> {
+        let ans = self
+            .0
+            .create_at(parent.map(loro::TreeID::from), index)?
+            .into();
         Ok(ans)
     }
 
@@ -107,8 +112,9 @@ impl LoroTree {
     /// // move `root2` to be a child of `root`.
     /// tree.mov(root2, root).unwrap();
     /// ```
-    pub fn mov(&self, target: TreeID, parent: TreeParentId) -> PyLoroResult<()> {
-        self.0.mov(target.into(), parent)?;
+    #[pyo3(signature = (target,parent=None))]
+    pub fn mov(&self, target: TreeID, parent: Option<TreeID>) -> PyLoroResult<()> {
+        self.0.mov(target.into(), parent.map(loro::TreeID::from))?;
         Ok(())
     }
 
@@ -127,10 +133,12 @@ impl LoroTree {
     /// let root = tree.create(None).unwrap();
     /// let root2 = tree.create(None).unwrap();
     /// // move `root2` to be a child of `root` at index 0.
-    /// tree.mov_to(root2, root, 0).unwrap();
+    /// tree.mov_to(root2, 0, root).unwrap();
     /// ```
-    pub fn mov_to(&self, target: TreeID, parent: TreeParentId, to: usize) -> PyLoroResult<()> {
-        self.0.mov_to(target.into(), parent, to)?;
+    #[pyo3(signature = (target, to, parent=None))]
+    pub fn mov_to(&self, target: TreeID, to: usize, parent: Option<TreeID>) -> PyLoroResult<()> {
+        self.0
+            .mov_to(target.into(), parent.map(loro::TreeID::from), to)?;
         Ok(())
     }
 
@@ -217,8 +225,10 @@ impl LoroTree {
     ///
     /// - If the target node does not exist, return `None`.
     /// - If the target node is a root node, return `Some(None)`.
-    pub fn parent(&self, target: TreeID) -> Option<TreeParentId> {
-        self.0.parent(target.into()).map(|x| x.into())
+    pub fn parent(&self, target: TreeID) -> Option<Option<TreeID>> {
+        self.0
+            .parent(target.into())
+            .map(tree_parent_id_to_option_tree_id)
     }
 
     /// Return whether target node exists. including deleted node.
@@ -253,15 +263,17 @@ impl LoroTree {
     /// Return all children of the target node.
     ///
     /// If the parent node does not exist, return `None`.
-    pub fn children(&self, parent: TreeParentId) -> Option<Vec<TreeID>> {
+    #[pyo3(signature = (parent=None))]
+    pub fn children(&self, parent: Option<TreeID>) -> Option<Vec<TreeID>> {
         self.0
-            .children(parent)
+            .children(parent.map(loro::TreeID::from))
             .map(|x| x.into_iter().map(|x| x.into()).collect())
     }
 
     /// Return the number of children of the target node.
-    pub fn children_num(&self, parent: TreeParentId) -> Option<usize> {
-        self.0.children_num(parent)
+    #[pyo3(signature = (parent=None))]
+    pub fn children_num(&self, parent: Option<TreeID>) -> Option<usize> {
+        self.0.children_num(parent.map(loro::TreeID::from))
     }
 
     /// Return container id of the tree.

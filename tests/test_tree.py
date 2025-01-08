@@ -1,13 +1,13 @@
-from loro import LoroDoc, LoroText, TreeParentId, ValueOrContainer
+from loro import LoroDoc, LoroText,  ValueOrContainer
 
 
 def test_tree():
     doc = LoroDoc()
     tree = doc.get_tree("tree")
     root = tree.create()
-    child = tree.create(TreeParentId.Node(root))
-    assert tree.children(TreeParentId.Node(root)) == [child]
-    assert tree.children(TreeParentId.Root()) == [root]
+    child = tree.create(root)
+    assert tree.children(root) == [child]
+    assert tree.children(None) == [root]
 
     child_meta = tree.get_meta(child)
     text = LoroText()

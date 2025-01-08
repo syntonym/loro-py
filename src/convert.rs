@@ -23,7 +23,7 @@ use crate::{
         Subscription, TextDelta, TreeDiff, TreeDiffItem, TreeExternalDiff,
     },
     undo::{CursorWithPos, UndoItemMeta, UndoOrRedo},
-    value::{ContainerID, ContainerType, LoroValue, TreeID, TreeParentId, ValueOrContainer, ID},
+    value::{ContainerID, ContainerType, LoroValue, TreeID, ValueOrContainer, ID},
 };
 
 impl From<ID> for loro::ID {
@@ -293,27 +293,6 @@ impl From<loro::TreeID> for TreeID {
     }
 }
 
-impl From<TreeParentId> for loro::TreeParentId {
-    fn from(value: TreeParentId) -> Self {
-        match value {
-            TreeParentId::Node { node } => loro::TreeParentId::Node(node.into()),
-            TreeParentId::Root {} => loro::TreeParentId::Root,
-            TreeParentId::Deleted {} => loro::TreeParentId::Deleted,
-            TreeParentId::Unexist {} => loro::TreeParentId::Unexist,
-        }
-    }
-}
-
-impl From<loro::TreeParentId> for TreeParentId {
-    fn from(value: loro::TreeParentId) -> Self {
-        match value {
-            loro::TreeParentId::Node(id) => TreeParentId::Node { node: id.into() },
-            loro::TreeParentId::Root => TreeParentId::Root {},
-            loro::TreeParentId::Deleted => TreeParentId::Deleted {},
-            loro::TreeParentId::Unexist => TreeParentId::Unexist {},
-        }
-    }
-}
 impl From<loro::Configure> for Configure {
     fn from(value: loro::Configure) -> Self {
         Self(value)
@@ -373,6 +352,16 @@ impl From<Index> for loro::Index {
     }
 }
 
+pub(crate) fn tree_parent_id_to_option_tree_id(value: loro::TreeParentId) -> Option<TreeID> {
+    match value {
+        loro::TreeParentId::Node(id) => Some(id.into()),
+        loro::TreeParentId::Root => None,
+        loro::TreeParentId::Deleted | loro::TreeParentId::Unexist => unreachable!(
+            "TreeParentId::Deleted or TreeParentId::Unexist should not be converted to TreeID"
+        ),
+    }
+}
+
 impl From<&loro::event::Diff<'_>> for Diff {
     fn from(value: &loro::event::Diff) -> Self {
         match value {
@@ -428,7 +417,7 @@ impl From<&loro::event::Diff<'_>> for Diff {
                                 index,
                                 position,
                             } => TreeExternalDiff::Create {
-                                parent: (*parent).into(),
+                                parent: tree_parent_id_to_option_tree_id(*parent),
                                 index: *index as u32,
                                 fractional_index: position.to_string(),
                             },
@@ -439,17 +428,17 @@ impl From<&loro::event::Diff<'_>> for Diff {
                                 old_parent,
                                 old_index,
                             } => TreeExternalDiff::Move {
-                                parent: (*parent).into(),
+                                parent: tree_parent_id_to_option_tree_id(*parent),
                                 index: *index as u32,
                                 fractional_index: position.to_string(),
-                                old_parent: (*old_parent).into(),
+                                old_parent: tree_parent_id_to_option_tree_id(*old_parent),
                                 old_index: *old_index as u32,
                             },
                             loro::TreeExternalDiff::Delete {
                                 old_parent,
                                 old_index,
                             } => TreeExternalDiff::Delete {
-                                old_parent: (*old_parent).into(),
+                                old_parent: tree_parent_id_to_option_tree_id(*old_parent),
                                 old_index: *old_index as u32,
                             },
                         },
@@ -756,7 +745,7 @@ impl From<loro::TreeNode> for TreeNode {
     fn from(node: loro::TreeNode) -> Self {
         Self {
             id: node.id.into(),
-            parent: node.parent.into(),
+            parent: tree_parent_id_to_option_tree_id(node.parent),
             fractional_index: node.fractional_index.to_string(),
             index: node.index,
         }

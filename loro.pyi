@@ -1416,10 +1416,8 @@ class LoroTree:
     is_attached: bool
     roots: list[TreeID]
     id: ContainerID
-    def __new__(
-        cls,
-    ): ...
-    def create(self, parent: TreeParentId = TreeParentId.Root()) -> TreeID:
+    def __new__(cls,): ...
+    def create(self, parent: typing.Optional[TreeID] = None) -> TreeID:
         r"""
         Create a new tree node and return the [`TreeID`].
 
@@ -1441,7 +1439,7 @@ class LoroTree:
         """
         ...
 
-    def create_at(self, parent: TreeParentId, index: int) -> TreeID:
+    def create_at(self,index:int, parent:typing.Optional[TreeID]=None) -> TreeID:
         r"""
         Create a new tree node at the given index and return the [`TreeID`].
 
@@ -1460,12 +1458,12 @@ class LoroTree:
         // create a root
         let root = tree.create(None).unwrap();
         // create a new child at index 0
-        let child = tree.create_at(root, 0).unwrap();
+        let child = tree.create_at(0, root).unwrap();
         ```
         """
         ...
 
-    def mov(self, target: TreeID, parent: TreeParentId) -> None:
+    def mov(self, target:TreeID, parent:typing.Optional[TreeID]=None) -> None:
         r"""
         Move the `target` node to be a child of the `parent` node.
 
@@ -1486,7 +1484,7 @@ class LoroTree:
         """
         ...
 
-    def mov_to(self, target: TreeID, parent: TreeParentId, to: int) -> None:
+    def mov_to(self, target:TreeID, to:int, parent:typing.Optional[TreeID]=None ) -> None:
         r"""
         Move the `target` node to be a child of the `parent` node at the given index.
         If the `parent` is `None`, the `target` node will be a root.
@@ -1503,7 +1501,7 @@ class LoroTree:
         let root = tree.create(None).unwrap();
         let root2 = tree.create(None).unwrap();
         // move `root2` to be a child of `root` at index 0.
-        tree.mov_to(root2, root, 0).unwrap();
+        tree.mov_to(root2, 0, root).unwrap();
         ```
         """
         ...
@@ -1587,7 +1585,7 @@ class LoroTree:
         """
         ...
 
-    def parent(self, target: TreeID) -> typing.Optional[TreeParentId]:
+    def parent(self, target:TreeID) -> typing.Optional[typing.Optional[TreeID]]:
         r"""
         Return the parent of target node.
 
@@ -1624,7 +1622,7 @@ class LoroTree:
         """
         ...
 
-    def children(self, parent: TreeParentId) -> typing.Optional[list[TreeID]]:
+    def children(self, parent:typing.Optional[TreeID]=None) -> typing.Optional[list[TreeID]]:
         r"""
         Return all children of the target node.
 
@@ -1632,7 +1630,7 @@ class LoroTree:
         """
         ...
 
-    def children_num(self, parent: TreeParentId) -> typing.Optional[int]:
+    def children_num(self, parent:typing.Optional[TreeID]=None) -> typing.Optional[int]:
         r"""
         Return the number of children of the target node.
         """
@@ -1742,6 +1740,7 @@ class TreeID:
 
     peer: int
     counter: int
+    def __new__(cls,peer:int, counter:int): ...
 
 class TreeNode:
     r"""
@@ -1749,7 +1748,7 @@ class TreeNode:
     """
 
     id: TreeID
-    parent: TreeParentId
+    parent: typing.Optional[TreeID]
     fractional_index: str
     index: int
 
@@ -2162,8 +2161,7 @@ class TextDelta:
 
 class TreeExternalDiff:
     class Create(TreeExternalDiff):
-        def __init__(self, parent: TreeParentId, index: int, fractional_index: str): ...
-        parent: TreeParentId
+        parent: typing.Optional[TreeID]
         index: int
         fractional_index: str
 
@@ -2176,30 +2174,17 @@ class TreeExternalDiff:
             old_parent: TreeParentId,
             old_index: int,
         ): ...
-        parent: TreeParentId
+        parent: typing.Optional[TreeID]
         index: int
         fractional_index: str
-        old_parent: TreeParentId
+        old_parent: typing.Optional[TreeID]
         old_index: int
 
     class Delete(TreeExternalDiff):
         def __init__(self, old_parent: TreeParentId, old_index: int): ...
-        old_parent: TreeParentId
+        old_parent: typing.Optional[TreeID]
         old_index: int
 
-class TreeParentId:
-    class Node(TreeParentId):
-        def __init__(self, node: TreeID): ...
-        node: TreeID
-
-    class Root(TreeParentId):
-        pass
-
-    class Deleted(TreeParentId):
-        pass
-
-    class Unexist(TreeParentId):
-        pass
 
 class UndoOrRedo:
     class Undo(UndoOrRedo):

@@ -13,7 +13,6 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ContainerID>()?;
     m.add_class::<Ordering>()?;
     m.add_class::<TreeID>()?;
-    m.add_class::<TreeParentId>()?;
     m.add_class::<ValueOrContainer>()?;
     Ok(())
 }
@@ -114,14 +113,15 @@ impl Display for TreeID {
     }
 }
 
-#[pyclass]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum TreeParentId {
-    Node { node: TreeID },
-    Root {},
-    Deleted {},
-    Unexist {},
+#[pymethods]
+impl TreeID {
+    #[new]
+    pub fn new(peer: PeerID, counter: Counter) -> Self {
+        Self { peer, counter }
+    }
 }
+
+pub type TreeParentId = Option<TreeID>;
 
 #[pyclass]
 #[derive(Debug, Clone)]
