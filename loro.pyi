@@ -1416,7 +1416,9 @@ class LoroTree:
     is_attached: bool
     roots: list[TreeID]
     id: ContainerID
-    def __new__(cls,): ...
+    def __new__(
+        cls,
+    ): ...
     def create(self, parent: typing.Optional[TreeID] = None) -> TreeID:
         r"""
         Create a new tree node and return the [`TreeID`].
@@ -1439,7 +1441,7 @@ class LoroTree:
         """
         ...
 
-    def create_at(self,index:int, parent:typing.Optional[TreeID]=None) -> TreeID:
+    def create_at(self, index: int, parent: typing.Optional[TreeID] = None) -> TreeID:
         r"""
         Create a new tree node at the given index and return the [`TreeID`].
 
@@ -1463,7 +1465,7 @@ class LoroTree:
         """
         ...
 
-    def mov(self, target:TreeID, parent:typing.Optional[TreeID]=None) -> None:
+    def mov(self, target: TreeID, parent: typing.Optional[TreeID] = None) -> None:
         r"""
         Move the `target` node to be a child of the `parent` node.
 
@@ -1484,7 +1486,9 @@ class LoroTree:
         """
         ...
 
-    def mov_to(self, target:TreeID, to:int, parent:typing.Optional[TreeID]=None ) -> None:
+    def mov_to(
+        self, target: TreeID, to: int, parent: typing.Optional[TreeID] = None
+    ) -> None:
         r"""
         Move the `target` node to be a child of the `parent` node at the given index.
         If the `parent` is `None`, the `target` node will be a root.
@@ -1585,7 +1589,7 @@ class LoroTree:
         """
         ...
 
-    def parent(self, target:TreeID) -> typing.Optional[typing.Optional[TreeID]]:
+    def parent(self, target: TreeID) -> typing.Optional[typing.Optional[TreeID]]:
         r"""
         Return the parent of target node.
 
@@ -1622,7 +1626,9 @@ class LoroTree:
         """
         ...
 
-    def children(self, parent:typing.Optional[TreeID]=None) -> typing.Optional[list[TreeID]]:
+    def children(
+        self, parent: typing.Optional[TreeID] = None
+    ) -> typing.Optional[list[TreeID]]:
         r"""
         Return all children of the target node.
 
@@ -1630,7 +1636,9 @@ class LoroTree:
         """
         ...
 
-    def children_num(self, parent:typing.Optional[TreeID]=None) -> typing.Optional[int]:
+    def children_num(
+        self, parent: typing.Optional[TreeID] = None
+    ) -> typing.Optional[int]:
         r"""
         Return the number of children of the target node.
         """
@@ -1740,7 +1748,7 @@ class TreeID:
 
     peer: int
     counter: int
-    def __new__(cls,peer:int, counter:int): ...
+    def __new__(cls, peer: int, counter: int): ...
 
 class TreeNode:
     r"""
@@ -2184,7 +2192,6 @@ class TreeExternalDiff:
         def __init__(self, old_parent: typing.Optional[TreeID], old_index: int): ...
         old_parent: typing.Optional[TreeID]
         old_index: int
-
 
 class UndoOrRedo:
     class Undo(UndoOrRedo):
