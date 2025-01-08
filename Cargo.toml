@@ -1,6 +1,6 @@
 [package]
 name = "loro_py"
-version = "1.2.5-beta.1"
+version = "1.2.7-alpha.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,11 +9,11 @@ name = "loro"
 crate-type = ["cdylib"]
 
 [dependencies]
-loro = { git = "https://github.com/loro-dev/loro.git", branch = "main", features = [
+loro = { git = "https://github.com/loro-dev/loro.git", rev = "763ab04797081ada8d0ae6de144b5422be90d093", features = [
     "counter",
     "jsonpath",
 ] }
-loro-internal = { git = "https://github.com/loro-dev/loro.git", branch = "main", features = [
+loro-internal = { git = "https://github.com/loro-dev/loro.git", rev = "763ab04797081ada8d0ae6de144b5422be90d093", features = [
     "counter",
     "jsonpath",
 ] }
