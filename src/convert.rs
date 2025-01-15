@@ -1,6 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, sync::Mutex};
 
 use fxhash::FxHashMap;
+use loro::{FractionalIndex, TreeParentId};
 use pyo3::{
     exceptions::PyTypeError,
     prelude::*,
@@ -362,6 +363,73 @@ pub(crate) fn tree_parent_id_to_option_tree_id(value: loro::TreeParentId) -> Opt
     }
 }
 
+impl From<ListDiffItem> for loro::event::ListDiffItem {
+    fn from(value: ListDiffItem) -> Self {
+        match value {
+            ListDiffItem::Insert { insert, is_move } => loro::event::ListDiffItem::Insert {
+                insert: insert.into_iter().map(|v| v.into()).collect(),
+                is_move,
+            },
+            ListDiffItem::Delete { delete } => loro::event::ListDiffItem::Delete {
+                delete: delete as usize,
+            },
+            ListDiffItem::Retain { retain } => loro::event::ListDiffItem::Retain {
+                retain: retain as usize,
+            },
+        }
+    }
+}
+
+impl From<MapDelta> for loro::event::MapDelta<'static> {
+    fn from(value: MapDelta) -> Self {
+        loro::event::MapDelta {
+            updated: value
+                .updated
+                .into_iter()
+                .map(|(k, v)| (Cow::Owned(k), v.map(|v| v.into())))
+                .collect(),
+        }
+    }
+}
+
+impl From<TreeDiffItem> for loro::TreeDiffItem {
+    fn from(value: TreeDiffItem) -> Self {
+        let target: loro::TreeID = value.target.into();
+        let action = match value.action {
+            TreeExternalDiff::Create {
+                parent,
+                index,
+                fractional_index,
+            } => loro::TreeExternalDiff::Create {
+                parent: loro::TreeParentId::from(parent.map(|p| loro::TreeID::from(p))),
+                index: index as usize,
+                position: FractionalIndex::from_hex_string(fractional_index),
+            },
+            TreeExternalDiff::Move {
+                parent,
+                index,
+                fractional_index,
+                old_parent,
+                old_index,
+            } => loro::TreeExternalDiff::Move {
+                parent: loro::TreeParentId::from(parent.map(loro::TreeID::from)),
+                index: index as usize,
+                position: FractionalIndex::from_hex_string(fractional_index),
+                old_parent: loro::TreeParentId::from(old_parent.map(|p| loro::TreeID::from(p))),
+                old_index: old_index as usize,
+            },
+            TreeExternalDiff::Delete {
+                old_parent,
+                old_index,
+            } => loro::TreeExternalDiff::Delete {
+                old_parent: loro::TreeParentId::from(old_parent.map(|p| loro::TreeID::from(p))),
+                old_index: old_index as usize,
+            },
+        };
+        loro::TreeDiffItem { target, action }
+    }
+}
+
 impl From<&loro::event::Diff<'_>> for Diff {
     fn from(value: &loro::event::Diff) -> Self {
         match value {
@@ -453,6 +521,26 @@ impl From<&loro::event::Diff<'_>> for Diff {
         }
     }
 }
+
+impl From<Diff> for loro::event::Diff<'static> {
+    fn from(value: Diff) -> Self {
+        match value {
+            Diff::List { diff } => {
+                loro::event::Diff::List(diff.into_iter().map(|i| i.into()).collect())
+            }
+            Diff::Text { diff } => {
+                loro::event::Diff::Text(diff.into_iter().map(|i| (&i).into()).collect())
+            }
+            Diff::Map { diff } => loro::event::Diff::Map(diff.into()),
+            Diff::Tree { diff } => loro::event::Diff::Tree(Cow::Owned(loro::TreeDiff {
+                diff: diff.diff.into_iter().map(|i| i.into()).collect(),
+            })),
+            Diff::Counter { diff } => loro::event::Diff::Counter(diff),
+            Diff::Unknown {} => loro::event::Diff::Unknown,
+        }
+    }
+}
+
 impl From<loro::EventTriggerKind> for EventTriggerKind {
     fn from(kind: loro::EventTriggerKind) -> Self {
         match kind {
@@ -725,17 +813,11 @@ impl From<loro::ImportBlobMetadata> for ImportBlobMetadata {
             end_timestamp: value.end_timestamp,
             change_num: value.change_num,
             mode: match value.mode {
-                loro_internal::encoding::EncodedBlobMode::Snapshot => EncodedBlobMode::Snapshot,
-                loro_internal::encoding::EncodedBlobMode::OutdatedSnapshot => {
-                    EncodedBlobMode::OutdatedSnapshot
-                }
-                loro_internal::encoding::EncodedBlobMode::ShallowSnapshot => {
-                    EncodedBlobMode::ShallowSnapshot
-                }
-                loro_internal::encoding::EncodedBlobMode::OutdatedRle => {
-                    EncodedBlobMode::OutdatedRle
-                }
-                loro_internal::encoding::EncodedBlobMode::Updates => EncodedBlobMode::Updates,
+                loro::EncodedBlobMode::Snapshot => EncodedBlobMode::Snapshot,
+                loro::EncodedBlobMode::OutdatedSnapshot => EncodedBlobMode::OutdatedSnapshot,
+                loro::EncodedBlobMode::ShallowSnapshot => EncodedBlobMode::ShallowSnapshot,
+                loro::EncodedBlobMode::OutdatedRle => EncodedBlobMode::OutdatedRle,
+                loro::EncodedBlobMode::Updates => EncodedBlobMode::Updates,
             },
         }
     }

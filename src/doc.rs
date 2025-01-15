@@ -12,7 +12,7 @@ use crate::{
     },
     convert::pyobject_to_container_id,
     err::PyLoroResult,
-    event::{DiffEvent, Index, Subscription},
+    event::{DiffBatch, DiffEvent, Index, Subscription},
     value::{ContainerID, ContainerType, LoroValue, Ordering, ValueOrContainer, ID},
     version::{Frontiers, VersionRange, VersionVector},
 };
@@ -153,10 +153,13 @@ impl LoroDoc {
         self.doc.is_detached_editing_enabled()
     }
 
-    /// Set the interval of mergeable changes, in seconds.
+    /// Set the interval of mergeable changes, **in seconds**.
     ///
     /// If two continuous local changes are within the interval, they will be merged into one change.
     /// The default value is 1000 seconds.
+    ///
+    /// By default, we record timestamps in seconds for each change. So if the merge interval is 1, and changes A and B
+    /// have timestamps of 3 and 4 respectively, then they will be merged into one change
     #[inline]
     pub fn set_change_merge_interval(&self, interval: i64) {
         self.doc.set_change_merge_interval(interval);
@@ -344,6 +347,8 @@ impl LoroDoc {
     }
 
     /// Set commit message for the current uncommitted changes
+    ///
+    /// It will be persisted.
     pub fn set_next_commit_message(&self, msg: &str) {
         self.doc.set_next_commit_message(msg)
     }
@@ -863,6 +868,33 @@ impl LoroDoc {
             .into_iter()
             .map(ContainerID::from)
             .collect()
+    }
+
+    /// Revert the current document state back to the target version
+    ///
+    /// Internally, it will generate a series of local operations that can revert the
+    /// current doc to the target version. It will calculate the diff between the current
+    /// state and the target state, and apply the diff to the current state.
+    #[inline]
+    pub fn revert_to(&self, version: &Frontiers) -> PyLoroResult<()> {
+        self.doc.revert_to(&version.into())?;
+        Ok(())
+    }
+
+    /// Apply a diff to the current document state.
+    ///
+    /// Internally, it will apply the diff to the current state.
+    #[inline]
+    pub fn apply_diff(&self, diff: DiffBatch) -> PyLoroResult<()> {
+        self.doc.apply_diff(diff.into())?;
+        Ok(())
+    }
+
+    /// Calculate the diff between two versions
+    #[inline]
+    pub fn diff(&self, a: &Frontiers, b: &Frontiers) -> PyLoroResult<DiffBatch> {
+        let ans = self.doc.diff(&a.into(), &b.into())?;
+        Ok(ans.into())
     }
 }
 

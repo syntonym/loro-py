@@ -19,6 +19,7 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ContainerDiff>()?;
     m.add_class::<Index>()?;
     m.add_class::<Diff>()?;
+    m.add_class::<DiffBatch>()?;
     Ok(())
 }
 
@@ -431,5 +432,43 @@ impl Subscription {
             }
         }
         Ok(())
+    }
+}
+
+#[pyclass(str)]
+#[derive(Debug, Clone)]
+pub struct DiffBatch(loro::event::DiffBatch);
+
+impl fmt::Display for DiffBatch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "DiffBatch({:?})", self.0)
+    }
+}
+
+#[pymethods]
+impl DiffBatch {
+    #[new]
+    pub fn new() -> Self {
+        Self(Default::default())
+    }
+
+    pub fn push(&mut self, cid: ContainerID, diff: Diff) -> Option<Diff> {
+        if let Err(diff) = self.0.push(cid.into(), diff.into()) {
+            Some((&diff).into())
+        } else {
+            None
+        }
+    }
+}
+
+impl From<DiffBatch> for loro::event::DiffBatch {
+    fn from(value: DiffBatch) -> Self {
+        value.0
+    }
+}
+
+impl From<loro::event::DiffBatch> for DiffBatch {
+    fn from(value: loro::event::DiffBatch) -> Self {
+        Self(value)
     }
 }
