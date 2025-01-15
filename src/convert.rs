@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, sync::Mutex};
 
 use fxhash::FxHashMap;
-use loro::{FractionalIndex, TreeParentId};
+use loro::FractionalIndex;
 use pyo3::{
     exceptions::PyTypeError,
     prelude::*,
@@ -401,7 +401,7 @@ impl From<TreeDiffItem> for loro::TreeDiffItem {
                 index,
                 fractional_index,
             } => loro::TreeExternalDiff::Create {
-                parent: loro::TreeParentId::from(parent.map(|p| loro::TreeID::from(p))),
+                parent: loro::TreeParentId::from(parent.map(loro::TreeID::from)),
                 index: index as usize,
                 position: FractionalIndex::from_hex_string(fractional_index),
             },
@@ -415,14 +415,14 @@ impl From<TreeDiffItem> for loro::TreeDiffItem {
                 parent: loro::TreeParentId::from(parent.map(loro::TreeID::from)),
                 index: index as usize,
                 position: FractionalIndex::from_hex_string(fractional_index),
-                old_parent: loro::TreeParentId::from(old_parent.map(|p| loro::TreeID::from(p))),
+                old_parent: loro::TreeParentId::from(old_parent.map(loro::TreeID::from)),
                 old_index: old_index as usize,
             },
             TreeExternalDiff::Delete {
                 old_parent,
                 old_index,
             } => loro::TreeExternalDiff::Delete {
-                old_parent: loro::TreeParentId::from(old_parent.map(|p| loro::TreeID::from(p))),
+                old_parent: loro::TreeParentId::from(old_parent.map(loro::TreeID::from)),
                 old_index: old_index as usize,
             },
         };

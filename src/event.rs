@@ -436,7 +436,7 @@ impl Subscription {
 }
 
 #[pyclass(str)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DiffBatch(loro::event::DiffBatch);
 
 impl fmt::Display for DiffBatch {
@@ -449,7 +449,7 @@ impl fmt::Display for DiffBatch {
 impl DiffBatch {
     #[new]
     pub fn new() -> Self {
-        Self(Default::default())
+        Self::default()
     }
 
     pub fn push(&mut self, cid: ContainerID, diff: Diff) -> Option<Diff> {
