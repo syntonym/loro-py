@@ -722,6 +722,30 @@ class LoroDoc:
         """
         ...
 
+    def revert_to(self, version: Frontiers) -> None:
+        r"""
+        Revert the current document state back to the target version
+
+        This will generate a series of local operations that can revert the
+        current doc to the target version. It will calculate the diff between the current
+        state and the target state, and apply the diff to the current state.
+        """
+        ...
+
+    def apply_diff(self, diff: DiffBatch) -> None:
+        r"""
+        Apply a diff to the current document state.
+
+        This will apply the diff to the current state.
+        """
+        ...
+
+    def diff(self, a: Frontiers, b: Frontiers) -> DiffBatch:
+        r"""
+        Calculate the diff between two versions
+        """
+        ...
+
 class LoroList:
     is_attached: bool
     id: ContainerID
@@ -1961,6 +1985,11 @@ class ContainerType:
     class Unknown(ContainerType):
         def __init__(self, kind: int): ...
         kind: int
+
+class DiffBatch:
+    def __init__(self): ...
+    def push(self, cid: ContainerID, diff: Diff) -> None: ...
+    def get_diff(self) -> list[(ContainerID, Diff)]: ...
 
 class Diff:
     class List(Diff):

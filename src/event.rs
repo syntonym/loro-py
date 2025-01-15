@@ -452,12 +452,30 @@ impl DiffBatch {
         Self::default()
     }
 
+    /// Push a new event to the batch.
+    ///
+    /// If the cid already exists in the batch, return Err
     pub fn push(&mut self, cid: ContainerID, diff: Diff) -> Option<Diff> {
         if let Err(diff) = self.0.push(cid.into(), diff.into()) {
             Some((&diff).into())
         } else {
             None
         }
+    }
+
+    // TODO: use iterator
+    /// Returns an iterator over the diffs in this batch, in the order they were added.
+    ///
+    /// The iterator yields tuples of `(&ContainerID, &Diff)` where:
+    /// - `ContainerID` is the ID of the container that was modified
+    /// - `Diff` contains the actual changes made to that container
+    ///
+    /// The order of the diffs is preserved from when they were originally added to the batch.
+    pub fn get_diff(&self) -> Vec<(ContainerID, Diff)> {
+        self.0
+            .iter()
+            .map(|(cid, diff)| (cid.into(), diff.into()))
+            .collect()
     }
 }
 
