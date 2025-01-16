@@ -19,12 +19,12 @@ our [Discord](https://discord.gg/tUsBSVfqzf) community.
 
 -   High-performance CRDT operations with Rust implementation
 -   Rich data types support: Text, List, Map, Tree, Movable List, Counter
--   Python-friendly API design (WIP)
+-   Python-friendly API design
 
 ## Installation
 
 ```shell
-pip install loro==1.2.7a0
+pip install loro==1.3.1
 ```
 
 ## Quick Start
