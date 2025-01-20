@@ -1,7 +1,7 @@
-use loro::LoroUnknown as LoroUnknownInner;
+use loro::{ContainerTrait, LoroUnknown as LoroUnknownInner};
 use pyo3::prelude::*;
 
-use crate::value::ContainerID;
+use crate::{doc::LoroDoc, value::ContainerID};
 
 #[pyclass(frozen)]
 #[derive(Debug, Clone)]
@@ -13,5 +13,9 @@ impl LoroUnknown {
     #[getter]
     pub fn id(&self) -> ContainerID {
         self.0.id().into()
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }

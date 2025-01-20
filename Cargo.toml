@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # loro = { path = "../loro/crates/loro", features = ["counter", "jsonpath"] }
-loro = { git = "https://github.com/loro-dev/loro.git", tag = "loro-ffi@1.3.0", features = [
+loro = { git = "https://github.com/loro-dev/loro.git", rev = "a168063460d73f5178bc28b00f067528566f6d48", features = [
     "counter",
     "jsonpath",
 ] }

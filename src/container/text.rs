@@ -1,8 +1,9 @@
-use loro::{LoroText as LoroTextInner, PeerID};
+use loro::{ContainerTrait, LoroText as LoroTextInner, PeerID};
 use pyo3::{exceptions::PyValueError, prelude::*};
 use std::fmt::Display;
 
 use crate::{
+    doc::LoroDoc,
     err::PyLoroResult,
     event::TextDelta,
     value::{ContainerID, LoroValue, ID},
@@ -295,6 +296,10 @@ impl LoroText {
     /// Get the editor of the text at the given position.
     pub fn get_editor_at_unicode_pos(&self, pos: usize) -> Option<PeerID> {
         self.0.get_editor_at_unicode_pos(pos)
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }
 

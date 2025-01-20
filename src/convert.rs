@@ -17,7 +17,7 @@ use crate::{
     },
     doc::{
         AbsolutePosition, ChangeMeta, Configure, CounterSpan, EncodedBlobMode, ExpandType,
-        ExportMode, IdSpan, ImportBlobMetadata, PosQueryResult,
+        ExportMode, IdSpan, ImportBlobMetadata, LoroDoc, PosQueryResult,
     },
     event::{
         ContainerDiff, Diff, DiffEvent, EventTriggerKind, Index, ListDiffItem, MapDelta, PathItem,
@@ -154,6 +154,12 @@ pub fn loro_value_to_pyobject(py: Python, value: LoroValue) -> PyResult<Bound<'_
             .into_pyobject(py)?
             .into_any()
             .into_bound()),
+    }
+}
+
+impl From<loro::LoroDoc> for LoroDoc {
+    fn from(value: loro::LoroDoc) -> Self {
+        Self { doc: value }
     }
 }
 

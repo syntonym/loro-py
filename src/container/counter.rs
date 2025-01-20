@@ -1,5 +1,5 @@
-use crate::{err::PyLoroResult, value::ContainerID};
-use loro::LoroCounter as LoroCounterInner;
+use crate::{doc::LoroDoc, err::PyLoroResult, value::ContainerID};
+use loro::{ContainerTrait, LoroCounter as LoroCounterInner};
 use pyo3::prelude::*;
 
 #[pyclass(frozen)]
@@ -37,5 +37,9 @@ impl LoroCounter {
     #[pyo3(name = "value")]
     pub fn get_value(&self) -> f64 {
         self.0.get_value()
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }

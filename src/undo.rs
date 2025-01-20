@@ -26,18 +26,18 @@ impl UndoManager {
     }
 
     /// Undo the last change made by the peer.
-    pub fn undo(&mut self, doc: &LoroDoc) -> PyLoroResult<bool> {
-        Ok(self.0.undo(&doc.doc)?)
+    pub fn undo(&mut self) -> PyLoroResult<bool> {
+        Ok(self.0.undo()?)
     }
 
     /// Redo the last change made by the peer.
-    pub fn redo(&mut self, doc: &LoroDoc) -> PyLoroResult<bool> {
-        Ok(self.0.redo(&doc.doc)?)
+    pub fn redo(&mut self) -> PyLoroResult<bool> {
+        Ok(self.0.redo()?)
     }
 
     /// Record a new checkpoint.
-    pub fn record_new_checkpoint(&mut self, doc: &LoroDoc) -> PyLoroResult<()> {
-        Ok(self.0.record_new_checkpoint(&doc.doc)?)
+    pub fn record_new_checkpoint(&mut self) -> PyLoroResult<()> {
+        Ok(self.0.record_new_checkpoint()?)
     }
 
     /// Whether the undo manager can undo.

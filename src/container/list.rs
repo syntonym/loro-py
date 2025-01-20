@@ -1,7 +1,8 @@
-use loro::LoroList as LoroListInner;
+use loro::{ContainerTrait, LoroList as LoroListInner};
 use pyo3::prelude::*;
 
 use crate::{
+    doc::LoroDoc,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, ValueOrContainer, ID},
 };
@@ -206,5 +207,9 @@ impl LoroList {
     /// Get the ID of the list item at the given position.
     pub fn get_id_at(&self, pos: usize) -> Option<ID> {
         self.0.get_id_at(pos).map(ID::from)
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }

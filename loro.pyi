@@ -916,6 +916,12 @@ class LoroList:
         """
         ...
 
+    def doc(self) -> typing.Optional[LoroDoc]:
+        r"""
+        Get the LoroDoc of the container.
+        """
+        ...
+
 class LoroMap:
     is_attached: bool
     id: ContainerID
@@ -1014,6 +1020,12 @@ class LoroMap:
     def get_last_editor(self, key: str) -> typing.Optional[int]:
         r"""
         Get the peer id of the last editor on the given entry
+        """
+        ...
+
+    def doc(self) -> typing.Optional[LoroDoc]:
+        r"""
+        Get the LoroDoc of the container.
         """
         ...
 
@@ -1208,6 +1220,12 @@ class LoroMovableList:
     def get_last_editor_at(self, pos: int) -> typing.Optional[int]:
         r"""
         Get the last editor of the list item at the given position.
+        """
+        ...
+
+    def doc(self) -> typing.Optional[LoroDoc]:
+        r"""
+        Get the LoroDoc of the container.
         """
         ...
 
@@ -1413,6 +1431,12 @@ class LoroText:
     def get_editor_at_unicode_pos(self, pos: int) -> typing.Optional[int]:
         r"""
         Get the editor of the text at the given position.
+        """
+        ...
+
+    def doc(self) -> typing.Optional[LoroDoc]:
+        r"""
+        Get the LoroDoc of the container.
         """
         ...
 
@@ -1709,8 +1733,20 @@ class LoroTree:
         """
         ...
 
+    def doc(self) -> typing.Optional[LoroDoc]:
+        r"""
+        Get the LoroDoc of the container.
+        """
+        ...
+
 class LoroUnknown:
     id: ContainerID
+
+    def doc(self) -> typing.Optional[LoroDoc]:
+        r"""
+        Get the LoroDoc of the container.
+        """
+        ...
 
 class MapDelta:
     updated: dict[str, typing.Optional[ValueOrContainer]]
@@ -1772,19 +1808,19 @@ class CursorWithPos:
 
 class UndoManager:
     def __new__(cls, doc: LoroDoc): ...
-    def undo(self, doc: LoroDoc) -> bool:
+    def undo(self) -> bool:
         r"""
         Undo the last change made by the peer.
         """
         ...
 
-    def redo(self, doc: LoroDoc) -> bool:
+    def redo(self) -> bool:
         r"""
         Redo the last change made by the peer.
         """
         ...
 
-    def record_new_checkpoint(self, doc: LoroDoc) -> None:
+    def record_new_checkpoint(self) -> None:
         r"""
         Record a new checkpoint.
         """

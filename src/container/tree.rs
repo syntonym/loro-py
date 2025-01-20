@@ -1,8 +1,9 @@
-use loro::LoroTree as LoroTreeInner;
+use loro::{ContainerTrait, LoroTree as LoroTreeInner};
 use pyo3::prelude::*;
 
 use crate::{
     convert::tree_parent_id_to_option_tree_id,
+    doc::LoroDoc,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, TreeID, TreeParentId, ID},
 };
@@ -337,6 +338,10 @@ impl LoroTree {
     /// Get the last move id of the target node.
     pub fn get_last_move_id(&self, target: &TreeID) -> Option<ID> {
         self.0.get_last_move_id(&(*target).into()).map(|x| x.into())
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }
 

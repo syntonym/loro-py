@@ -1,7 +1,8 @@
-use loro::{LoroMap as LoroMapInner, PeerID};
+use loro::{ContainerTrait, LoroMap as LoroMapInner, PeerID};
 use pyo3::prelude::*;
 
 use crate::{
+    doc::LoroDoc,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, ValueOrContainer},
 };
@@ -138,5 +139,9 @@ impl LoroMap {
     /// Get the peer id of the last editor on the given entry
     pub fn get_last_editor(&self, key: &str) -> Option<PeerID> {
         self.0.get_last_editor(key)
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }

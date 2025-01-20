@@ -1,8 +1,9 @@
 use crate::{
+    doc::LoroDoc,
     err::PyLoroResult,
     value::{ContainerID, LoroValue, ValueOrContainer},
 };
-use loro::{LoroMovableList as LoroMovableListInner, PeerID};
+use loro::{ContainerTrait, LoroMovableList as LoroMovableListInner, PeerID};
 use pyo3::prelude::*;
 
 use super::{Container, Cursor, Side};
@@ -216,5 +217,9 @@ impl LoroMovableList {
     /// Get the last editor of the list item at the given position.
     pub fn get_last_editor_at(&self, pos: usize) -> Option<PeerID> {
         self.0.get_last_editor_at(pos)
+    }
+
+    pub fn doc(&self) -> Option<LoroDoc> {
+        self.0.doc().map(|doc| doc.into())
     }
 }
