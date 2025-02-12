@@ -419,6 +419,20 @@ pub struct Subscription(pub(crate) Mutex<Option<loro::Subscription>>);
 
 #[pymethods]
 impl Subscription {
+    pub fn detach(&self) {
+        let s = self.0.lock().unwrap().take();
+        if let Some(s) = s {
+            s.detach();
+        }
+    }
+
+    pub fn unsubscribe(&self) {
+        let s = self.0.lock().unwrap().take();
+        if let Some(s) = s {
+            s.unsubscribe();
+        }
+    }
+
     #[pyo3(signature = (*_args, **_kwargs))]
     pub fn __call__(
         &self,

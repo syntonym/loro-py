@@ -156,7 +156,16 @@ class LoroDoc:
     has_history_cache: bool
     def __new__(
         cls,
-    ): ...
+    ): 
+        """
+        `LoroDoc` is the entry for the whole document.
+        When it's dropped, all the associated [`Handler`]s will be invalidated.
+
+        **Important:** Loro is a pure library and does not handle network protocols.
+        It is the responsibility of the user to manage the storage, loading, and synchronization
+        of the bytes exported by Loro in a manner suitable for their specific environment.
+        """
+        ...
     def fork(self) -> LoroDoc:
         r"""
         Duplicate the document with a different PeerID
@@ -1774,7 +1783,25 @@ class StyleConfigMap:
     def default_rich_text_config(cls) -> StyleConfigMap: ...
 
 class Subscription:
-    def __call__(self) -> None: ...
+    def detach(self) -> None: 
+        """
+        Detaches the subscription from this handle. The callback will
+        continue to be invoked until the doc has been subscribed to
+        are dropped
+        """
+        ...
+    
+    def unsubscribe(self) -> None:
+        """
+        Unsubscribes the subscription. The callback will not be invoked anymore.
+        """
+        ...
+
+    def __call__(self) -> None: 
+        """
+        Unsubscribes the subscription. The callback will not be invoked anymore.
+        """
+        ...
 
 class TreeDiff:
     diff: list[TreeDiffItem]

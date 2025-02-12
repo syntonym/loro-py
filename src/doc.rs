@@ -33,6 +33,12 @@ pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+/// `LoroDoc` is the entry for the whole document.
+/// When it's dropped, all the associated [`Handler`]s will be invalidated.
+///
+/// **Important:** Loro is a pure library and does not handle network protocols.
+/// It is the responsibility of the user to manage the storage, loading, and synchronization
+/// of the bytes exported by Loro in a manner suitable for their specific environment.
 #[pyclass(frozen)]
 pub struct LoroDoc {
     pub(crate) doc: LoroDocInner,
@@ -400,26 +406,6 @@ impl LoroDoc {
             .export_json_updates(&start_vv.into(), &end_vv.into());
         serde_json::to_string(&json).unwrap()
     }
-
-    // /// Export all the ops not included in the given `VersionVector`
-    // #[deprecated(
-    //     since = "1.0.0",
-    //     note = "Use `export` with `ExportMode::Updates` instead"
-    // )]
-    // #[inline]
-    // pub fn export_from(&self, vv: &VersionVector) -> Vec<u8> {
-    //     self.doc.export_from(vv)
-    // }
-
-    // /// Export the current state and history of the document.
-    // #[deprecated(
-    //     since = "1.0.0",
-    //     note = "Use `export` with `ExportMode::Snapshot` instead"
-    // )]
-    // #[inline]
-    // pub fn export_snapshot(&self) -> Vec<u8> {
-    //     self.doc.export_snapshot().unwrap()
-    // }
 
     /// Convert `Frontiers` into `VersionVector`
     #[inline]
@@ -901,7 +887,41 @@ impl LoroDoc {
 #[pyclass(frozen)]
 pub struct Configure(pub loro::Configure);
 
-// TODO: Implement the methods for Configure
+#[pymethods]
+impl Configure {
+    #[staticmethod]
+    pub fn default() -> Self {
+        Self(loro::Configure::default())
+    }
+
+    pub fn text_style_config(&self) -> StyleConfigMap {
+        StyleConfigMap(self.0.text_style_config().read().unwrap().clone())
+    }
+
+    pub fn record_timestamp(&self) -> bool {
+        self.0.record_timestamp()
+    }
+
+    pub fn set_record_timestamp(&self, record: bool) {
+        self.0.set_record_timestamp(record);
+    }
+
+    pub fn detached_editing(&self) -> bool {
+        self.0.detached_editing()
+    }
+
+    pub fn set_detached_editing(&self, mode: bool) {
+        self.0.set_detached_editing(mode);
+    }
+
+    pub fn merge_interval(&self) -> i64 {
+        self.0.merge_interval()
+    }
+
+    pub fn set_merge_interval(&self, interval: i64) {
+        self.0.set_merge_interval(interval);
+    }
+}
 
 #[pyclass(get_all, set_all, str)]
 #[derive(Debug)]
