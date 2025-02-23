@@ -1920,6 +1920,13 @@ class UpdateOptions:
     - `use_refined_diff`: Whether to use a more refined but slower diff algorithm. Defaults to true.
     """
 
+    def __init__(
+        self,
+        *,
+        timeout_ms: float | None = None,
+        use_refined_diff: bool = True,
+    ) -> None: ...
+
     timeout_ms: typing.Optional[float]
     use_refined_diff: bool
 

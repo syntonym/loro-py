@@ -314,6 +314,18 @@ pub struct UpdateOptions {
     pub use_refined_diff: bool,
 }
 
+#[pymethods]
+impl UpdateOptions {
+    #[new]
+    #[pyo3(signature = (timeout_ms=None, use_refined_diff=true))]
+    pub fn new(timeout_ms: Option<f64>, use_refined_diff: bool) -> Self {
+        Self {
+            timeout_ms,
+            use_refined_diff,
+        }
+    }
+}
+
 impl Display for UpdateOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
