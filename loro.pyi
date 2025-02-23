@@ -156,7 +156,7 @@ class LoroDoc:
     has_history_cache: bool
     def __new__(
         cls,
-    ): 
+    ):
         """
         `LoroDoc` is the entry for the whole document.
         When it's dropped, all the associated [`Handler`]s will be invalidated.
@@ -166,6 +166,7 @@ class LoroDoc:
         of the bytes exported by Loro in a manner suitable for their specific environment.
         """
         ...
+
     def fork(self) -> LoroDoc:
         r"""
         Duplicate the document with a different PeerID
@@ -1783,21 +1784,21 @@ class StyleConfigMap:
     def default_rich_text_config(cls) -> StyleConfigMap: ...
 
 class Subscription:
-    def detach(self) -> None: 
+    def detach(self) -> None:
         """
         Detaches the subscription from this handle. The callback will
         continue to be invoked until the doc has been subscribed to
         are dropped
         """
         ...
-    
+
     def unsubscribe(self) -> None:
         """
         Unsubscribes the subscription. The callback will not be invoked anymore.
         """
         ...
 
-    def __call__(self) -> None: 
+    def __call__(self) -> None:
         """
         Unsubscribes the subscription. The callback will not be invoked anymore.
         """
@@ -2116,17 +2117,10 @@ class ExpandType:
     - None: when inserting new text before or after this style, the new text should **not** inherit this style.
     """
 
-    class Before(ExpandType):
-        pass
-
-    class After(ExpandType):
-        pass
-
-    class Both(ExpandType):
-        pass
-
-    class Null(ExpandType):
-        pass
+    Before: ExpandType
+    After: ExpandType
+    Both: ExpandType
+    Null: ExpandType
 
 class ExportMode:
     class Snapshot(ExportMode):
