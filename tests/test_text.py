@@ -19,6 +19,7 @@ def test_text_get_value():
             assert delta["insert"] == " world!"
             assert "attributes" not in delta
 
+
 def test_text_to_delta():
     doc = LoroDoc()
     doc.config_text_style(StyleConfigMap.default_rich_text_config())
@@ -36,3 +37,12 @@ def test_text_to_delta():
             assert isinstance(delta, TextDelta.Insert)
             assert delta.insert == " world!"
             assert delta.attributes == None
+
+
+def test_text_update():
+    doc = LoroDoc()
+    text = doc.get_text("text")
+    text.insert(0, "Hello world!")
+    text.update("Hello beautiful world...", use_refined_diff=True)
+
+    assert text.to_string() == "Hello beautiful world..."

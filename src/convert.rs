@@ -13,7 +13,7 @@ use crate::{
     awareness::PeerInfo,
     container::{
         Container, Cursor, LoroCounter, LoroList, LoroMap, LoroMovableList, LoroText, LoroTree,
-        LoroUnknown, Side, TreeNode, UpdateOptions,
+        LoroUnknown, Side, TreeNode,
     },
     doc::{
         AbsolutePosition, ChangeMeta, Configure, CounterSpan, EncodedBlobMode, ExpandType,
@@ -628,15 +628,6 @@ impl From<&Index> for loro::Index {
             Index::Key { key } => loro::Index::Key(key.clone().into()),
             Index::Seq { index } => loro::Index::Seq(*index as usize),
             Index::Node { target } => loro::Index::Node((*target).into()),
-        }
-    }
-}
-
-impl From<UpdateOptions> for loro::UpdateOptions {
-    fn from(value: UpdateOptions) -> Self {
-        Self {
-            timeout_ms: value.timeout_ms,
-            use_refined_diff: value.use_refined_diff,
         }
     }
 }

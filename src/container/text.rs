@@ -11,7 +11,6 @@ use crate::{
 
 pub fn register_class(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LoroText>()?;
-    m.add_class::<UpdateOptions>()?;
     m.add_class::<Cursor>()?;
     m.add_class::<Side>()?;
     Ok(())
@@ -141,10 +140,21 @@ impl LoroText {
     /// text.update("Hello World", Default::default()).unwrap();
     /// assert_eq!(text.to_string(), "Hello World");
     /// ```
-    ///
-    pub fn update(&self, text: &str, options: UpdateOptions) -> PyResult<()> {
+    #[pyo3(signature = (text, use_refined_diff=true, timeout_ms=None))]
+    pub fn update(
+        &self,
+        text: &str,
+        use_refined_diff: bool,
+        timeout_ms: Option<f64>,
+    ) -> PyResult<()> {
         self.0
-            .update(text, options.into())
+            .update(
+                text,
+                loro::UpdateOptions {
+                    timeout_ms,
+                    use_refined_diff,
+                },
+            )
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(())
     }
@@ -152,9 +162,21 @@ impl LoroText {
     /// Update the current text based on the provided text.
     ///
     /// This update calculation is line-based, which will be more efficient but less precise.
-    pub fn update_by_line(&self, text: &str, options: UpdateOptions) -> PyResult<()> {
+    #[pyo3(signature = (text, use_refined_diff=true, timeout_ms=None))]
+    pub fn update_by_line(
+        &self,
+        text: &str,
+        use_refined_diff: bool,
+        timeout_ms: Option<f64>,
+    ) -> PyResult<()> {
         self.0
-            .update_by_line(text, options.into())
+            .update_by_line(
+                text,
+                loro::UpdateOptions {
+                    timeout_ms,
+                    use_refined_diff,
+                },
+            )
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(())
     }
@@ -300,27 +322,6 @@ impl LoroText {
 
     pub fn doc(&self) -> Option<LoroDoc> {
         self.0.doc().map(|doc| doc.into())
-    }
-}
-
-/// Options for controlling the text update behavior.
-///
-/// - `timeout_ms`: Optional timeout in milliseconds for the diff computation
-/// - `use_refined_diff`: Whether to use a more refined but slower diff algorithm. Defaults to true.
-#[pyclass(set_all, get_all, str)]
-#[derive(Clone, Debug)]
-pub struct UpdateOptions {
-    pub timeout_ms: Option<f64>,
-    pub use_refined_diff: bool,
-}
-
-impl Display for UpdateOptions {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "UpdateOptions(timeout_ms={:?}, use_refined_diff={})",
-            self.timeout_ms, self.use_refined_diff
-        )
     }
 }
 
