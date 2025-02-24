@@ -1,4 +1,5 @@
 import typing
+from enum import Enum
 
 LoroValue = typing.Union[
     None,
@@ -48,7 +49,50 @@ class ChangeMeta:
     deps: Frontiers
     len: int
 
-class Configure: ...
+class Configure:
+    def __new__(cls) -> Configure: ...
+    
+    def text_style_config(self) -> StyleConfigMap:
+        """
+        Get the text style configuration.
+        """
+        ...
+    
+    def record_timestamp(self) -> bool:
+        """
+        Get whether to record timestamp for changes.
+        """
+        ...
+    
+    def set_record_timestamp(self, record: bool) -> None:
+        """
+        Set whether to record timestamp for changes.
+        """
+        ...
+    
+    def detached_editing(self) -> bool:
+        """
+        Get whether detached editing mode is enabled.
+        """
+        ...
+    
+    def set_detached_editing(self, mode: bool) -> None:
+        """
+        Set whether to enable detached editing mode.
+        """
+        ...
+    
+    def merge_interval(self) -> int:
+        """
+        Get the merge interval in milliseconds.
+        """
+        ...
+    
+    def set_merge_interval(self, interval: int) -> None:
+        """
+        Set the merge interval in milliseconds.
+        """
+        ...
 
 class ContainerDiff:
     r"""
@@ -1296,7 +1340,7 @@ class LoroText:
         """
         ...
 
-    def update(self, text: str, options: UpdateOptions) -> None:
+    def update(self, text: str, use_refined_diff: bool = True, timeout_ms: float | None = None) -> None:
         r"""
         Update the current text based on the provided text.
 
@@ -1305,21 +1349,10 @@ class LoroText:
 
         This could take a long time for large texts (e.g. > 50_000 characters).
         In that case, you should use `updateByLine` instead.
-
-        # Example
-        ```rust
-        use loro::LoroDoc;
-
-        let doc = LoroDoc::new();
-        let text = doc.get_text("text");
-        text.insert(0, "Hello").unwrap();
-        text.update("Hello World", Default::default()).unwrap();
-        assert_eq!(text.to_string(), "Hello World");
-        ```
         """
         ...
 
-    def update_by_line(self, text: str, options: UpdateOptions) -> None:
+    def update_by_line(self, text: str, use_refined_diff: bool = True, timeout_ms: float | None = None) -> None:
         r"""
         Update the current text based on the provided text.
 
@@ -1912,24 +1945,6 @@ class UndoManager:
         """
         ...
 
-class UpdateOptions:
-    r"""
-    Options for controlling the text update behavior.
-
-    - `timeout_ms`: Optional timeout in milliseconds for the diff computation
-    - `use_refined_diff`: Whether to use a more refined but slower diff algorithm. Defaults to true.
-    """
-
-    def __init__(
-        self,
-        *,
-        timeout_ms: float | None = None,
-        use_refined_diff: bool = True,
-    ) -> None: ...
-
-    timeout_ms: typing.Optional[float]
-    use_refined_diff: bool
-
 class VersionVector:
     def __new__(
         cls,
@@ -2084,37 +2099,23 @@ class Diff:
     class Unknown(Diff):
         pass
 
-class EncodedBlobMode:
-    class Snapshot(EncodedBlobMode):
-        pass
+class EncodedBlobMode(Enum):
+    Snapshot = "snapshot"
+    OutdatedSnapshot = "outdated_snapshot"
+    ShallowSnapshot = "shallow_snapshot"
+    OutdatedRle = "outdated_rle"
+    Updates = "updates"
 
-    class OutdatedSnapshot(EncodedBlobMode):
-        pass
 
-    class ShallowSnapshot(EncodedBlobMode):
-        pass
-
-    class OutdatedRle(EncodedBlobMode):
-        pass
-
-    class Updates(EncodedBlobMode):
-        pass
-
-class EventTriggerKind:
+class EventTriggerKind(Enum):
     r"""
     The kind of the event trigger.
     """
+    Local = "local"
+    Import = "import"
+    Checkout = "checkout"
 
-    class Local(EventTriggerKind):
-        pass
-
-    class Import(EventTriggerKind):
-        pass
-
-    class Checkout(EventTriggerKind):
-        pass
-
-class ExpandType:
+class ExpandType(Enum):
     r"""
     Whether to expand the style when inserting new text around it.
 
@@ -2123,11 +2124,10 @@ class ExpandType:
     - Both: when inserting new text before or after this style, the new text should inherit this style.
     - None: when inserting new text before or after this style, the new text should **not** inherit this style.
     """
-
-    Before: ExpandType
-    After: ExpandType
-    Both: ExpandType
-    Null: ExpandType
+    Before = "before"
+    After = "after"
+    Both = "both"
+    Null = "null"
 
 class ExportMode:
     class Snapshot(ExportMode):
@@ -2180,25 +2180,15 @@ class ListDiffItem:
         def __init__(self, retain: int): ...
         retain: int
 
-class Ordering:
-    class Less(Ordering):
-        pass
+class Ordering(Enum):
+    Less = "less"
+    Equal = "equal"
+    Greater = "greater"
 
-    class Equal(Ordering):
-        pass
-
-    class Greater(Ordering):
-        pass
-
-class Side:
-    class Left(Side):
-        pass
-
-    class Middle(Side):
-        pass
-
-    class Right(Side):
-        pass
+class Side(Enum):
+    Left = "left"
+    Middle = "middle"
+    Right = "right"
 
 class TextDelta:
     class Retain(TextDelta):
@@ -2249,12 +2239,9 @@ class TreeExternalDiff:
         old_parent: typing.Optional[TreeID]
         old_index: int
 
-class UndoOrRedo:
-    class Undo(UndoOrRedo):
-        pass
-
-    class Redo(UndoOrRedo):
-        pass
+class UndoOrRedo(Enum):
+    Undo = "undo"
+    Redo = "redo"
 
 class ValueOrContainer:
     class Value(ValueOrContainer):

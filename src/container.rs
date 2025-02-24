@@ -11,7 +11,7 @@ pub use counter::LoroCounter;
 pub use list::LoroList;
 pub use map::LoroMap;
 pub use movable_list::LoroMovableList;
-pub use text::{Cursor, LoroText, Side, UpdateOptions};
+pub use text::{Cursor, LoroText, Side};
 pub use tree::{LoroTree, TreeNode};
 pub use unknown::LoroUnknown;
 

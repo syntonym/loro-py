@@ -1,4 +1,4 @@
-from loro import LoroDoc, StyleConfigMap, TextDelta, UpdateOptions
+from loro import LoroDoc, StyleConfigMap, TextDelta
 
 
 def test_text_get_value():
@@ -43,6 +43,6 @@ def test_text_update():
     doc = LoroDoc()
     text = doc.get_text("text")
     text.insert(0, "Hello world!")
-    text.update("Hello beautiful world...", UpdateOptions(use_refined_diff=True))
+    text.update("Hello beautiful world...", use_refined_diff=True)
 
     assert text.to_string() == "Hello beautiful world..."

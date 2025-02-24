@@ -889,7 +889,7 @@ pub struct Configure(pub loro::Configure);
 
 #[pymethods]
 impl Configure {
-    #[staticmethod]
+    #[new]
     pub fn default() -> Self {
         Self(loro::Configure::default())
     }
