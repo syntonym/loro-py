@@ -520,7 +520,7 @@ dependencies = [
 
 [[package]]
 name = "loro_py"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "fxhash",
  "loro",
