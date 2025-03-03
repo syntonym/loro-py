@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+use loro::LORO_VERSION;
 use pyo3::prelude::*;
 
 mod awareness;
@@ -12,8 +13,8 @@ mod value;
 mod version;
 
 /// Python bindings for Loro
-#[pymodule]
-fn loro(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
+#[pymodule(name = "loro")]
+fn loro_py(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     doc::register_class(m)?;
     container::register_class(m)?;
     event::register_class(m)?;
@@ -21,5 +22,6 @@ fn loro(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     version::register_class(m)?;
     undo::register_class(m)?;
     awareness::register_class(m)?;
+    m.add("LORO_VERSION", LORO_VERSION)?;
     Ok(())
 }

@@ -1,6 +1,7 @@
 import typing
 from enum import Enum
 
+LORO_VERSION: str
 LoroValue = typing.Union[
     None,
     bool,
@@ -797,6 +798,65 @@ class LoroDoc:
     def diff(self, a: Frontiers, b: Frontiers) -> DiffBatch:
         r"""
         Calculate the diff between two versions
+        """
+        ...
+
+    def config_default_text_style(self, text_style: typing.Optional[ExpandType] = None) -> None:
+        r"""
+        Configures the default text style for the document.
+
+        This method sets the default text style configuration for the document when using LoroText.
+        If `None` is provided, the default style is reset.
+
+        # Parameters
+
+        - `text_style`: The style configuration to set as the default. `None` to reset.
+        """
+        ...
+
+    def set_next_commit_origin(self, origin: str) -> None:
+        r"""
+        Set `origin` for the current uncommitted changes, it can be used to track the source of changes in an event.
+
+        It will NOT be persisted.
+        """
+        ...
+
+    def set_next_commit_timestamp(self, timestamp: int) -> None:
+        r"""
+        Set the timestamp of the next commit.
+
+        It will be persisted and stored in the `OpLog`.
+        You can get the timestamp from the [`Change`] type.
+        """
+        ...
+
+    def set_next_commit_options(
+        self,
+        origin: typing.Optional[str] = None,
+        timestamp: typing.Optional[int] = None,
+        immediate_renew: typing.Optional[bool] = True,
+        commit_msg: typing.Optional[str] = None,
+    ) -> None:
+        r"""
+        Set the options of the next commit.
+
+        It will be used when the next commit is performed.
+        """
+        ...
+
+    def clear_next_commit_options(self) -> None:
+        r"""
+        Clear the options of the next commit.
+        """
+        ...
+
+    def has_container(self, id: ContainerID) -> bool:
+        r"""
+        Check if the doc contains the target container.
+
+        A root container always exists, while a normal container exists
+        if it has ever been created on the doc.
         """
         ...
 

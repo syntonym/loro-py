@@ -183,6 +183,20 @@ impl LoroDoc {
         self.doc.config_text_style(text_style.0)
     }
 
+    /// Configures the default text style for the document.
+    ///
+    /// This method sets the default text style configuration for the document when using LoroText.
+    /// If `None` is provided, the default style is reset.
+    ///
+    /// # Parameters
+    ///
+    /// - `text_style`: The style configuration to set as the default. `None` to reset.
+    #[pyo3(signature = (text_style=None))]
+    pub fn config_default_text_style(&self, text_style: Option<ExpandType>) {
+        self.doc
+            .config_default_text_style(text_style.map(|c| loro::StyleConfig { expand: c.into() }));
+    }
+
     /// Attach the document state to the latest known version.
     ///
     /// > The document becomes detached during a `checkout` operation.
@@ -357,6 +371,45 @@ impl LoroDoc {
     /// It will be persisted.
     pub fn set_next_commit_message(&self, msg: &str) {
         self.doc.set_next_commit_message(msg)
+    }
+
+    /// Set `origin` for the current uncommitted changes, it can be used to track the source of changes in an event.
+    ///
+    /// It will NOT be persisted.
+    pub fn set_next_commit_origin(&self, origin: &str) {
+        self.doc.set_next_commit_origin(origin)
+    }
+
+    /// Set the timestamp of the next commit.
+    ///
+    /// It will be persisted and stored in the `OpLog`.
+    /// You can get the timestamp from the [`Change`] type.
+    pub fn set_next_commit_timestamp(&self, timestamp: i64) {
+        self.doc.set_next_commit_timestamp(timestamp)
+    }
+
+    /// Set the options of the next commit.
+    ///
+    /// It will be used when the next commit is performed.
+    #[pyo3(signature = (origin=None, timestamp=None, immediate_renew=true, commit_msg=None))]
+    pub fn set_next_commit_options(
+        &self,
+        origin: Option<&str>,
+        timestamp: Option<i64>,
+        immediate_renew: Option<bool>,
+        commit_msg: Option<&str>,
+    ) {
+        self.doc.set_next_commit_options(loro::CommitOptions {
+            origin: origin.map(|s| s.into()),
+            immediate_renew: immediate_renew.unwrap_or(true),
+            timestamp,
+            commit_msg: commit_msg.map(|s| s.into()),
+        })
+    }
+
+    /// Clear the options of the next commit.
+    pub fn clear_next_commit_options(&self) {
+        self.doc.clear_next_commit_options()
     }
 
     /// Whether the document is in detached mode, where the [loro_internal::DocState] is not
@@ -881,6 +934,14 @@ impl LoroDoc {
     pub fn diff(&self, a: &Frontiers, b: &Frontiers) -> PyLoroResult<DiffBatch> {
         let ans = self.doc.diff(&a.into(), &b.into())?;
         Ok(ans.into())
+    }
+
+    /// Check if the doc contains the target container.
+    ///
+    /// A root container always exists, while a normal container exists
+    /// if it has ever been created on the doc.
+    pub fn has_container(&self, id: &ContainerID) -> bool {
+        self.doc.has_container(&id.into())
     }
 }
 
