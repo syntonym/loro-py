@@ -975,7 +975,9 @@ impl LoroDoc {
             .doc
             .subscribe_first_commit_from_peer(Box::new(move |payload| {
                 Python::with_gil(|py| {
-                    let b = callback.call1(py, (payload.peer,)).unwrap();
+                    let b = callback
+                        .call1(py, (FirstCommitFromPeerPayload { peer: payload.peer },))
+                        .unwrap();
                     b.extract::<bool>(py).unwrap()
                 })
             }));
@@ -1004,6 +1006,11 @@ impl LoroDoc {
         }));
         subscription.into()
     }
+}
+
+#[derive(Debug, IntoPyObject)]
+pub struct FirstCommitFromPeerPayload {
+    pub peer: PeerID,
 }
 
 #[derive(Debug, IntoPyObject)]
