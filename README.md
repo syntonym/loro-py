@@ -39,7 +39,8 @@ doc = LoroDoc()
 text = doc.get_text("text")
 # Insert text
 text.insert(0, "Hello, Loro!")
-doc.subscribe(lambda e: print(e))
+# store the `subscription` reference to prevent garbage collection
+sub = doc.subscribe_root(lambda e: print(e))
 doc.commit()
 ```
 
