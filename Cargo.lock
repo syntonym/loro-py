@@ -462,9 +462,9 @@ dependencies = [
 
 [[package]]
 name = "loro"
-version = "1.5.10"
+version = "1.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c80ff1e46afaf129b05e1ffb11651007ce0a442f02a30c1cc539dc5dbbf905a3"
+checksum = "a95643130841a4deab62ad4b7d782d0bac71688480f4efade6d13d9c5ca741d2"
 dependencies = [
  "enum-as-inner 0.6.1",
  "fxhash",
@@ -478,9 +478,9 @@ dependencies = [
 
 [[package]]
 name = "loro-common"
-version = "1.5.8"
+version = "1.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0b84787030d7925d43f125841d3ce7e4850ffac80d2687cdaa9fd571e67129b"
+checksum = "c1b0b2739af1bc260f0a7d7cf072bf7d28c584ff021c0bc28b2a911b4822543b"
 dependencies = [
  "arbitrary",
  "enum-as-inner 0.6.1",
@@ -508,9 +508,9 @@ dependencies = [
 
 [[package]]
 name = "loro-internal"
-version = "1.5.8"
+version = "1.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1467b6b499e3d41909cbf524a5000bcbbc21af1205d2ee20290bed140395124b"
+checksum = "30e016320208e96cc20ed01a050a2fea10fc71760fde7a7670a673d6af4b7905"
 dependencies = [
  "append-only-bytes",
  "arref",
@@ -552,9 +552,9 @@ dependencies = [
 
 [[package]]
 name = "loro-kv-store"
-version = "1.5.8"
+version = "1.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa1e5fe58c0245e62775784b6ac69cbe04a081f3348ec3b9742ecc7901085c18"
+checksum = "f54a5e9e9c3cb13e162835c1e94cf6b9df691b6e1bbc456f4cdc0471968adc82"
 dependencies = [
  "bytes",
  "ensure-cov",
@@ -597,7 +597,7 @@ dependencies = [
 
 [[package]]
 name = "loro_py"
-version = "1.5.3"
+version = "1.5.4"
 dependencies = [
  "fxhash",
  "loro",
@@ -823,11 +823,10 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.24.1"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17da310086b068fbdcefbba30aeb3721d5bb9af8db4987d6735b2183ca567229"
+checksum = "8970a78afe0628a3e3430376fc5fd76b6b45c4d43360ffd6cdd40bdde72b682a"
 dependencies = [
- "cfg-if",
  "indoc",
  "libc",
  "memoffset",
@@ -841,9 +840,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-build-config"
-version = "0.24.1"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e27165889bd793000a098bb966adc4300c312497ea25cf7a690a9f0ac5aa5fc1"
+checksum = "458eb0c55e7ece017adeba38f2248ff3ac615e53660d7c71a238d7d2a01c7598"
 dependencies = [
  "once_cell",
  "target-lexicon",
@@ -851,9 +850,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-ffi"
-version = "0.24.1"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05280526e1dbf6b420062f3ef228b78c0c54ba94e157f5cb724a609d0f2faabc"
+checksum = "7114fe5457c61b276ab77c5055f206295b812608083644a5c5b2640c3102565c"
 dependencies = [
  "libc",
  "pyo3-build-config",
@@ -861,9 +860,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros"
-version = "0.24.1"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c3ce5686aa4d3f63359a5100c62a127c9f15e8398e5fdeb5deef1fed5cd5f44"
+checksum = "a8725c0a622b374d6cb051d11a0983786448f7785336139c3c94f5aa6bef7e50"
 dependencies = [
  "proc-macro2",
  "pyo3-macros-backend",
@@ -873,9 +872,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros-backend"
-version = "0.24.1"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4cf6faa0cbfb0ed08e89beb8103ae9724eb4750e3a78084ba4017cbe94f3855"
+checksum = "4109984c22491085343c05b0dbc54ddc405c3cf7b4374fc533f5c3313a572ccc"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
