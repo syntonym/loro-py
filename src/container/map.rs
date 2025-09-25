@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use loro::{ContainerTrait, LoroMap as LoroMapInner, PeerID};
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyKeyError, prelude::*, PyErr};
 
 use crate::{
     doc::LoroDoc,
@@ -66,27 +66,31 @@ impl LoroMap {
     }
 
     pub fn __contains__(&self, key: &str) -> bool {
-        match self.0.get(key) {
-            Some(_) => true,
-            None => false
-        }
+        self.0.get(key).is_some()
     }
 
-    pub fn __getitem__(&self, key: &str) -> Option<ValueOrContainer> {
+    pub fn __getitem__(&self, key: &str) -> PyResult<ValueOrContainer> {
         self.get(key)
+            .ok_or_else(|| PyKeyError::new_err(format!("Key {key} not found")))
     }
 
     pub fn __setitem__(&self, key: &str, value: LoroValue) -> PyLoroResult<()> {
         self.insert(key, value)
     }
 
-    pub fn __delitem__(&self, key: &str) -> PyLoroResult<()> {
-        self.0.delete(key)?;
+    pub fn __delitem__(&self, key: &str) -> PyResult<()> {
+        if !self.__contains__(key) {
+            return Err(PyKeyError::new_err(format!("Key {key} not found")));
+        }
+        self.delete(key).map_err(PyErr::from)?;
         Ok(())
     }
 
-    pub fn __iter__(&self) -> Vec<String> {
-        self.0.keys().map(|k| k.to_string()).collect()
+    pub fn items(&self) -> Vec<(String, ValueOrContainer)> {
+        self.0
+            .keys()
+            .filter_map(|k| self.get(&k).map(|v| (k.to_string(), v)))
+            .collect()
     }
 
     /// Get the ID of the map.
